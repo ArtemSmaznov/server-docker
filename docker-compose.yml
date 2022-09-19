@@ -1,0 +1,153 @@
+version: '3'
+
+volumes:
+  db:
+  # nextcloud:
+  certs:
+  acme:
+  vhost.d:
+  html:
+
+networks:
+  proxy-tier:
+
+services:
+  ##### Proxy
+
+  proxy:
+    build: ./proxy
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+      - 6600:6600
+    labels:
+      com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: 'true'
+    volumes:
+      - certs:/etc/nginx/certs:ro
+      - vhost.d:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    networks:
+      - proxy-tier
+
+  letsencrypt-companion:
+    image: nginxproxy/acme-companion
+    restart: always
+    volumes:
+      - certs:/etc/nginx/certs
+      - acme:/etc/acme.sh
+      - vhost.d:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - proxy-tier
+    depends_on:
+      - proxy
+
+  ##### Nextcloud
+
+  app:
+    image: nextcloud:fpm-alpine
+    restart: always
+    volumes:
+      - /home/nextcloud:/var/www/nextcloud
+    environment:
+      - MYSQL_HOST=db
+      - REDIS_HOST=redis
+      - OVERWRITEWEBROOT=/nextcloud
+      - NEXTCLOUD_DATA_DIR=/var/www/nextcloud/data
+    env_file:
+      - db.env
+    depends_on:
+      - db
+      - redis
+
+  nextcloud-web:
+    build: ./web
+    restart: always
+    volumes:
+      - /home/nextcloud:/var/www/nextcloud:ro
+    environment:
+      - VIRTUAL_HOST=art-s.tplinkdns.com
+      - VIRTUAL_PATH=/nextcloud
+      - LETSENCRYPT_HOST=art-s.tplinkdns.com
+      - LETSENCRYPT_EMAIL=ArtemSmaznov@gmail.com
+    depends_on:
+      - app
+    networks:
+      - proxy-tier
+      - default
+
+  nextcloud-cron:
+    build: ./cron
+    restart: always
+    volumes:
+      - /home/nextcloud:/var/www/nextcloud
+    environment:
+      - OVERWRITEWEBROOT=/nextcloud
+      - NEXTCLOUD_DATA_DIR=/var/www/nextcloud/data
+    entrypoint: /cron.sh
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: mariadb
+    restart: always
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    volumes:
+      - db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=uhcai7pu5f20HosvvXIa6rBtk
+    env_file:
+      - db.env
+
+  redis:
+    image: redis:alpine
+    restart: always
+
+  ##### Music
+
+  # # This neesd to be updated from the tmp one
+  # music-mpd:
+  #   image: vimagick/mpd
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ./music/mpd/mpd.conf:/etc/mpd.conf:ro
+  #     - /home/music:/var/lib/mpd/music
+  #   environment:
+  #     - VIRTUAL_HOST=art-s.tplinkdns.com
+  #     # - VIRTUAL_PATH=/music
+  #     # - VIRTUAL_PORT=6600
+  #     # - VIRTUAL_PORT=6600,8800
+  #   networks:
+  #     - proxy-tier
+
+  # # This should be the same as the tmp one
+  # music-webdav:
+  #   build: ./music/webdav
+  #   restart: always
+  #   volumes:
+  #     - ./music/webdav/nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - /home/music:/srv/http/music
+  #   environment:
+  #     - VIRTUAL_HOST=art-s.tplinkdns.com
+  #     - VIRTUAL_PATH=/music
+  #   networks:
+  #     - proxy-tier
+
+  ##### Debug
+
+  test-hello:
+    image: nginx
+    container_name: 'test-hello'
+    restart: always
+    volumes:
+      - ./test/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./test/www:/var/www/hello
+    environment:
+      - VIRTUAL_HOST=art-s.tplinkdns.com
+      - VIRTUAL_PATH=/hello
+    networks:
+      - proxy-tier

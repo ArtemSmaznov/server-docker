@@ -1,0 +1,10 @@
+version: '3'
+services:
+  test:
+    image: nginx
+    restart: always
+    volumes:
+      - ./default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./www:/var/www/test:ro
+    environment:
+      - VIRTUAL_HOST=art-s.tplinkdns.com
