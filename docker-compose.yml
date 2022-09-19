@@ -1,0 +1,190 @@
+version: '3'
+
+volumes:
+  db:
+  certs:
+  acme:
+  vhost.d:
+  html:
+
+networks:
+  proxy-tier:
+    ipam:
+      config:
+        - subnet: 172.10.0.0/24
+  home-assistant:
+  nextcloud:
+
+services:
+
+  proxy:
+    build: ./proxy
+    container_name: 'reverse-proxy'
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - certs:/etc/nginx/certs:ro
+      - vhost.d:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    labels:
+      com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: 'true'
+    networks:
+      - proxy-tier
+
+  acme:
+    image: nginxproxy/acme-companion
+    container_name: 'acme'
+    depends_on:
+      - proxy
+    restart: unless-stopped
+    volumes:
+      - certs:/etc/nginx/certs
+      - acme:/etc/acme.sh
+      - vhost.d:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - proxy-tier
+
+  home:
+    image: nginx
+    container_name: 'home'
+    restart: unless-stopped
+    env_file:
+      - secrets/home.env
+    networks:
+      - proxy-tier
+
+  nextcloud-app:
+    image: nextcloud:fpm-alpine
+    container_name: 'nextcloud-app'
+    depends_on:
+      - nextcloud-db
+      - nextcloud-redis
+    restart: unless-stopped
+    volumes:
+      - /home/nextcloud:/var/www/html
+    environment:
+      - MYSQL_HOST=nextcloud-db
+      - REDIS_HOST=nextcloud-redis
+    env_file:
+      - secrets/db.env
+    networks:
+      - nextcloud
+
+  nextcloud-server:
+    build: ./nextcloud/server
+    container_name: 'nextcloud-server'
+    depends_on:
+      - nextcloud-app
+    restart: unless-stopped
+    ports:
+      - 9000:80
+    volumes:
+      - /home/nextcloud:/var/www/html:ro
+    env_file:
+      - secrets/nextcloud.env
+    networks:
+      - proxy-tier
+      - nextcloud
+
+  nextcloud-cron:
+    image: nextcloud:fpm-alpine
+    entrypoint: /cron.sh
+    container_name: 'nextcloud-cron'
+    depends_on:
+      - nextcloud-db
+      - nextcloud-redis
+    restart: unless-stopped
+    volumes:
+      - /home/nextcloud:/var/www/html
+    networks:
+      - nextcloud
+
+  nextcloud-db:
+    image: mariadb
+    command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
+    container_name: 'nextcloud-db'
+    restart: unless-stopped
+    volumes:
+      - db:/var/lib/mysql
+    environment:
+      - MARIADB_AUTO_UPGRADE=1
+      - MARIADB_DISABLE_UPGRADE_BACKUP=1
+    env_file:
+      - secrets/db.env
+      - secrets/db-root.env
+    networks:
+      - nextcloud
+
+  nextcloud-redis:
+    image: redis:alpine
+    container_name: 'nextcloud-redis'
+    restart: unless-stopped
+    networks:
+      - nextcloud
+
+  hass:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    privileged: true
+    container_name: 'home-assistant'
+    restart: unless-stopped
+    ports:
+      - 8123:8123
+    volumes:
+      - /home/home-assistant/config:/config
+      - /etc/localtime:/etc/localtime:ro
+    env_file:
+      - secrets/homeassistant.env
+    networks:
+      - proxy-tier
+      - home-assistant
+
+  zwave-js-ui:
+    image: zwavejs/zwave-js-ui:latest
+    tty: true
+    container_name: 'zwave-js-ui'
+    depends_on:
+      - hass
+    restart: unless-stopped
+    stop_signal: SIGINT
+    ports:
+      - 8091:8091 # port for web interface
+      - 3000:3000 # port for Z-Wave JS websocket server
+    volumes:
+      - /home/home-assistant/zwave:/usr/src/app/store
+    devices:
+      - /dev/serial/by-id/usb-0658_0200-if00:/dev/zwave
+    environment:
+      - ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
+    env_file:
+      - secrets/zwave-js-ui.env
+      - secrets/timezone.env
+    networks:
+      - home-assistant
+
+  plex:
+    image: plexinc/pms-docker
+    container_name: 'plex-media-server'
+    hostname: plex-media-server
+    restart: unless-stopped
+    ports:
+      - 32400:32400/tcp
+      - 8324:8324/tcp
+      - 32469:32469/tcp
+      - 1900:1900/udp
+      - 32410:32410/udp
+      - 32412:32412/udp
+      - 32413:32413/udp
+      - 32414:32414/udp
+    volumes:
+      - /home/plex/config:/config
+      - /home/plex/transcode:/transcode
+      - /home/plex/media:/data
+    env_file:
+      - secrets/plex.env
+    networks:
+      - proxy-tier
