@@ -1,0 +1,260 @@
+#+TITLE: Server
+#+AUTHOR: Artem Smaznov
+#+DESCRIPTION: Docker setup for my server
+#+STARTUP: overview
+
+Docker setup for running:
+- Nextcloud in a ~subdir~ with =fpm=, =mariaDB= and =nginx-proxy=
+
+* Table of Contents :toc:
+- [[#usage][Usage]]
+- [[#docker-compose][Docker Compose]]
+  - [[#init-section][Init Section]]
+  - [[#reverse-proxy][Reverse Proxy]]
+  - [[#nextcloud][Nextcloud]]
+- [[#docker-images][Docker Images]]
+  - [[#reverse-proxy-1][Reverse Proxy]]
+  - [[#nextcloud-1][Nextcloud]]
+- [[#secrets-examples][Secrets Examples]]
+
+* Usage
+Bring server up
+#+begin_example shell
+docker-compose up -d
+#+end_example
+
+Bring server down
+#+begin_example shell
+docker-compose down
+#+end_example
+
+Update images
+#+begin_example shell
+docker-compose build --pull
+#+end_example
+
+* Docker Compose
+:PROPERTIES:
+:header-args: :tangle docker-compose.yml
+:END:
+** Init Section
+Version
+#+begin_src yaml
+version: '3'
+#+end_src
+
+Volumes
+#+begin_src yaml
+volumes:
+  db:
+  certs:
+  acme:
+  html:
+#+end_src
+
+Networks
+#+begin_src yaml
+networks:
+  proxy-tier:
+#+end_src
+
+Start services block
+#+begin_src yaml
+services:
+#+end_src
+
+** Reverse Proxy
+*** Proxy
+#+begin_src yaml
+  proxy:
+    container_name: 'reverse-proxy'
+    build: ./proxy
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    labels:
+      com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: 'true'
+    volumes:
+      - certs:/etc/nginx/certs:ro
+      - html:/usr/share/nginx/html
+      - ./proxy/vhost.d:/etc/nginx/vhost.d
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    networks:
+      - proxy-tier
+#+end_src
+
+*** Let's Encrypt Companion
+#+begin_src yaml
+  letsencrypt-companion:
+    container_name: 'letsencrypt-companion'
+    image: nginxproxy/acme-companion
+    restart: always
+    volumes:
+      - certs:/etc/nginx/certs
+      - acme:/etc/acme.sh
+      - html:/usr/share/nginx/html
+      - ./proxy/vhost.d:/etc/nginx/vhost.d
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - proxy-tier
+    depends_on:
+      - proxy
+#+end_src
+
+** Nextcloud
+*** App
+#+begin_src yaml
+  nextcloud-app:
+    container_name: 'nextcloud-app'
+    build: ./nextcloud/app
+    restart: always
+    volumes:
+      - /home/nextcloud:/var/www/nextcloud
+    environment:
+      - MYSQL_HOST=nextcloud-db
+      - REDIS_HOST=nextcloud-redis
+      - OVERWRITEWEBROOT=/nextcloud
+      - NEXTCLOUD_DATA_DIR=/var/www/nextcloud/data
+    env_file:
+      - secrets/db.env
+    depends_on:
+      - nextcloud-db
+      - nextcloud-redis
+#+end_src
+
+*** Server
+#+begin_src yaml
+  nextcloud-server:
+    container_name: 'nextcloud-server'
+    image: nginx:alpine
+    restart: always
+    volumes:
+      - /home/nextcloud:/var/www/nextcloud:ro
+      - ./nextcloud/server/nginx.conf:/etc/nginx/nginx.conf:ro
+    environment:
+      - VIRTUAL_PATH=/nextcloud
+    env_file:
+      - secrets/domain.env
+    depends_on:
+      - nextcloud-app
+    networks:
+      - proxy-tier
+      - default
+#+end_src
+
+*** Cron
+#+begin_src yaml
+  nextcloud-cron:
+    container_name: 'nextcloud-cron'
+    build: ./nextcloud/cron
+    restart: always
+    volumes:
+      - /home/nextcloud:/var/www/nextcloud
+    entrypoint: /cron.sh
+    depends_on:
+      - nextcloud-db
+      - nextcloud-redis
+#+end_src
+
+*** Database
+#+begin_src yaml
+  nextcloud-db:
+    container_name: 'nextcloud-db'
+    image: mariadb
+    restart: always
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    volumes:
+      - db:/var/lib/mysql
+    env_file:
+      - secrets/db.env
+      - secrets/db-root.env
+#+end_src
+
+*** Redis
+#+begin_src yaml
+  nextcloud-redis:
+    container_name: 'nextcloud-redis'
+    image: redis:alpine
+    restart: always
+#+end_src
+
+* Docker Images
+** Reverse Proxy
+Dockerfile
+#+begin_src dockerfile :tangle proxy/Dockerfile
+FROM nginxproxy/nginx-proxy:alpine
+
+COPY uploadsize.conf /etc/nginx/conf.d/uploadsize.conf
+#+end_src
+
+uploadsize
+#+begin_src conf :tangle proxy/uploadsize.conf
+client_max_body_size 10G;
+proxy_request_buffering off;
+#+end_src
+
+vhost
+#+begin_src conf :tangle proxy/vhost.d/default
+## Start of configuration add by nextcloud-server container
+location ^~ /.well-known {
+  # The rules in this block are an adaptation of the rules
+  # in the Nextcloud `.htaccess` that concern `/.well-known`.
+
+  location = /.well-known/carddav { return 301 /nextcloud/remote.php/dav/; }
+  location = /.well-known/caldav  { return 301 /nextcloud/remote.php/dav/; }
+
+  # Let Nextcloud's API for `/.well-known` URIs handle all other
+  # requests by passing them to the front-end controller.
+  return 301 /nextcloud/index.php$request_uri;
+}
+## End of configuration add by nextcloud-server container
+#+end_src
+
+** Nextcloud
+App
+#+begin_src dockerfile :tangle nextcloud/app/Dockerfile
+FROM nextcloud:fpm-alpine
+
+VOLUME /var/www/nextcloud
+
+WORKDIR /var/www/nextcloud
+
+CMD sed -i 's/\/var\/www\/html/\/var\/www\/nextcloud/' /entrypoint.sh && \
+    echo '*/5 * * * * php -f /var/www/nextcloud/cron.php' > /var/spool/cron/crontabs/www-data && \
+    /entrypoint.sh php-fpm
+#+end_src
+
+Server
+#+begin_src dockerfile :tangle nextcloud/server/Dockerfile
+FROM nginx:alpine
+
+COPY nginx.conf /etc/nginx/nginx.conf
+#+end_src
+
+Cron
+#+begin_src dockerfile :tangle nextcloud/cron/Dockerfile
+FROM nextcloud:fpm-alpine
+
+RUN echo '*/5 * * * * php -f /var/www/nextcloud/cron.php' > /var/spool/cron/crontabs/www-data
+#+end_src
+
+* Secrets Examples
+~db.env~ example
+#+begin_example yaml
+MYSQL_DATABASE=nextcloud
+MYSQL_USER=nextcloud
+MYSQL_PASSWORD=MySqLpAsSw0rD
+#+end_example
+
+~db-root.env~ example
+#+begin_example yaml
+MYSQL_ROOT_PASSWORD=MyRoOtSqLpAsSw0rD
+#+end_example
+
+~domain.env~ example
+#+begin_example yaml
+VIRTUAL_HOST=my.domain.com
+LETSENCRYPT_HOST=my.domain.com
+LETSENCRYPT_EMAIL=my@email.com
+#+end_example
