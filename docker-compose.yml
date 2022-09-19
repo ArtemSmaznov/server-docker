@@ -15,12 +15,13 @@ services:
   ##### Proxy
 
   proxy:
+    container_name: 'reverse-proxy'
     build: ./proxy
     restart: always
     ports:
       - 80:80
       - 443:443
-      - 6600:6600
+      # - 6600:6600
     labels:
       com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: 'true'
     volumes:
@@ -32,6 +33,7 @@ services:
       - proxy-tier
 
   letsencrypt-companion:
+    container_name: 'letsencrypt-companion'
     image: nginxproxy/acme-companion
     restart: always
     volumes:
@@ -47,24 +49,26 @@ services:
 
   ##### Nextcloud
 
-  app:
+  nextcloud-app:
+    container_name: 'nextcloud-app'
     image: nextcloud:fpm-alpine
     restart: always
     volumes:
       - /home/nextcloud:/var/www/nextcloud
     environment:
-      - MYSQL_HOST=db
-      - REDIS_HOST=redis
+      - MYSQL_HOST=nextcloud-db
+      - REDIS_HOST=nextcloud-redis
       - OVERWRITEWEBROOT=/nextcloud
       - NEXTCLOUD_DATA_DIR=/var/www/nextcloud/data
     env_file:
       - db.env
     depends_on:
-      - db
-      - redis
+      - nextcloud-db
+      - nextcloud-redis
 
-  nextcloud-web:
-    build: ./web
+  nextcloud-server:
+    container_name: 'nextcloud-server'
+    build: ./nextcloud/server
     restart: always
     volumes:
       - /home/nextcloud:/var/www/nextcloud:ro
@@ -74,13 +78,14 @@ services:
       - LETSENCRYPT_HOST=art-s.tplinkdns.com
       - LETSENCRYPT_EMAIL=ArtemSmaznov@gmail.com
     depends_on:
-      - app
+      - nextcloud-app
     networks:
       - proxy-tier
       - default
 
   nextcloud-cron:
-    build: ./cron
+    container_name: 'nextcloud-cron'
+    build: ./nextcloud/cron
     restart: always
     volumes:
       - /home/nextcloud:/var/www/nextcloud
@@ -89,10 +94,11 @@ services:
       - NEXTCLOUD_DATA_DIR=/var/www/nextcloud/data
     entrypoint: /cron.sh
     depends_on:
-      - db
-      - redis
+      - nextcloud-db
+      - nextcloud-redis
 
-  db:
+  nextcloud-db:
+    container_name: 'nextcloud-db'
     image: mariadb
     restart: always
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
@@ -103,7 +109,8 @@ services:
     env_file:
       - db.env
 
-  redis:
+  nextcloud-redis:
+    container_name: 'nextcloud-redis'
     image: redis:alpine
     restart: always
 
@@ -140,8 +147,8 @@ services:
   ##### Debug
 
   test-hello:
-    image: nginx
     container_name: 'test-hello'
+    image: nginx
     restart: always
     volumes:
       - ./test/default.conf:/etc/nginx/conf.d/default.conf:ro
