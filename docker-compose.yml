@@ -5,7 +5,7 @@ volumes:
   # nextcloud:
   certs:
   acme:
-  vhost.d:
+  # vhost.d:
   html:
 
 networks:
@@ -26,7 +26,8 @@ services:
       com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: 'true'
     volumes:
       - certs:/etc/nginx/certs:ro
-      - vhost.d:/etc/nginx/vhost.d
+      # - vhost.d:/etc/nginx/vhost.d
+      - ./proxy/vhost.d:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
       - /var/run/docker.sock:/tmp/docker.sock:ro
     networks:
@@ -39,7 +40,8 @@ services:
     volumes:
       - certs:/etc/nginx/certs
       - acme:/etc/acme.sh
-      - vhost.d:/etc/nginx/vhost.d
+      # - vhost.d:/etc/nginx/vhost.d
+      - ./proxy/vhost.d:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
@@ -51,7 +53,8 @@ services:
 
   nextcloud-app:
     container_name: 'nextcloud-app'
-    image: nextcloud:fpm-alpine
+    build: ./nextcloud/app
+    # image: nextcloud:fpm-alpine
     restart: always
     volumes:
       - /home/nextcloud:/var/www/nextcloud
@@ -68,10 +71,11 @@ services:
 
   nextcloud-server:
     container_name: 'nextcloud-server'
-    build: ./nextcloud/server
+    image: nginx:alpine
     restart: always
     volumes:
       - /home/nextcloud:/var/www/nextcloud:ro
+      - ./nextcloud/server/nginx.conf:/etc/nginx/nginx.conf:ro
     environment:
       - VIRTUAL_HOST=art-s.tplinkdns.com
       - VIRTUAL_PATH=/nextcloud
@@ -89,9 +93,9 @@ services:
     restart: always
     volumes:
       - /home/nextcloud:/var/www/nextcloud
-    environment:
-      - OVERWRITEWEBROOT=/nextcloud
-      - NEXTCLOUD_DATA_DIR=/var/www/nextcloud/data
+    # environment:
+    #   - OVERWRITEWEBROOT=/nextcloud
+    #   - NEXTCLOUD_DATA_DIR=/var/www/nextcloud/data
     entrypoint: /cron.sh
     depends_on:
       - nextcloud-db

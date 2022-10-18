@@ -1,0 +1,24 @@
+## Start of configuration add by letsencrypt container
+location ^~ /.well-known/acme-challenge/ {
+    auth_basic off;
+    auth_request off;
+    allow all;
+    root /usr/share/nginx/html;
+    try_files $uri =404;
+    break;
+}
+## End of configuration add by letsencrypt container
+
+## Start of configuration add by nextcloud-server container
+location ^~ /.well-known {
+  # The rules in this block are an adaptation of the rules
+  # in the Nextcloud `.htaccess` that concern `/.well-known`.
+
+  location = /.well-known/carddav { return 301 /nextcloud/remote.php/dav/; }
+  location = /.well-known/caldav  { return 301 /nextcloud/remote.php/dav/; }
+
+  # Let Nextcloud's API for `/.well-known` URIs handle all other
+  # requests by passing them to the front-end controller.
+  return 301 /nextcloud/index.php$request_uri;
+}
+## End of configuration add by nextcloud-server container
