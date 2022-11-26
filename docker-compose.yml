@@ -64,8 +64,6 @@ services:
     container_name: 'nextcloud-server'
     image: nginx:alpine
     restart: always
-    ports:
-      - 8080:80
     volumes:
       - /home/nextcloud:/var/www/nextcloud:ro
       - ./nextcloud/server/nginx.conf:/etc/nginx/nginx.conf:ro
