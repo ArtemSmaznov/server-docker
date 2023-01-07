@@ -1,7 +1,8 @@
-#+TITLE: Server
-#+AUTHOR: Artem Smaznov
-#+DESCRIPTION: Docker setup for my server
-#+STARTUP: overview
+#+title:       Server
+#+author:      Artem Smaznov
+#+description: Docker setup for my server
+#+startup:     overview
+#+auto_tangle: t
 
 Docker setup for running:
 - Nextcloud in a ~subdir~ with =fpm=, =mariaDB= and =nginx-proxy=
