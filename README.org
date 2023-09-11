@@ -130,6 +130,7 @@ services:
     restart: unless-stopped
     volumes:
       - /home/nextcloud:/var/www/html
+      - /home/music:/media/music
     environment:
       - MYSQL_HOST=nextcloud-db
       - REDIS_HOST=nextcloud-redis
