@@ -14,6 +14,7 @@ networks:
         - subnet: 172.10.0.0/24
   home-assistant:
   nextcloud:
+  vpn:
 
 services:
 
@@ -183,8 +184,33 @@ services:
     volumes:
       - /home/plex/config:/config
       - /home/plex/transcode:/transcode
-      - /home/plex/media:/data
+      - /home/transmission/downloads/media:/data
+      - /home/music:/data/music
+    environment:
+      - PLEX_UID=1000
+      - PLEX_GID=1000
     env_file:
       - secrets/plex.env
+      - secrets/timezone.env
     networks:
       - proxy-tier
+
+  transmission:
+    image: lscr.io/linuxserver/transmission:latest
+    container_name: transmission
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - /home/transmission/config:/config
+      - /home/transmission/downloads:/downloads
+      - /home/transmission/watch:/watch
+    env_file:
+      - secrets/timezone.env
+    ports:
+      - 9091:9091
+      - 51413:51413
+      - 51413:51413/udp
+    networks:
+      - vpn
