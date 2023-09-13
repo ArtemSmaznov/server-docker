@@ -50,6 +50,30 @@ services:
     networks:
       - proxy-tier
 
+  wireguard:
+    image: linuxserver/wireguard:latest
+    container_name: 'wireguard'
+    restart: unless-stopped
+    ports:
+      - 51820:51820/udp
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv6.conf.all.disable_ipv6=1
+      - net.ipv6.conf.default.disable_ipv6=1
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - /home/wireguard:/config
+      - /lib/modules:/lib/modules
+    environment:
+      - PUID=1000
+      - PGID=1000
+    env_file:
+      - secrets/wireguard.env
+      - secrets/timezone.env
+    networks:
+      - vpn
+
   home:
     image: nginx
     container_name: 'home'
