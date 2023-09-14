@@ -110,10 +110,14 @@ services:
 #+begin_src yaml
   wireguard:
     image: linuxserver/wireguard:latest
-    container_name: 'wireguard'
+    container_name: wireguard
     restart: unless-stopped
     ports:
       - 51820:51820/udp
+      # transmission
+      - 9091:9091
+      - 51413:51413
+      - 51413:51413/udp
     sysctls:
       - net.ipv4.conf.all.src_valid_mark=1
       - net.ipv6.conf.all.disable_ipv6=1
@@ -309,26 +313,25 @@ services:
 #+end_src
 
 *** Transmission
+https://spad.uk/wireguard-as-a-vpn-client-in-docker-using-pia/
+Still needs work on opening 51413 port
 #+begin_src yaml
   transmission:
     image: lscr.io/linuxserver/transmission:latest
     container_name: transmission
     restart: unless-stopped
-    environment:
-      - PUID=1000
-      - PGID=1000
     volumes:
       - /home/transmission/config:/config
       - /home/transmission/downloads:/downloads
       - /home/transmission/watch:/watch
+    environment:
+      - PUID=1000
+      - PGID=1000
     env_file:
       - secrets/timezone.env
-    ports:
-      - 9091:9091
-      - 51413:51413
-      - 51413:51413/udp
-    networks:
-      - vpn
+    network_mode: service:wireguard
+    # networks:
+    #   - vpn
 #+end_src
 
 * Secrets Examples
