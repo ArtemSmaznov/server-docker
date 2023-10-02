@@ -20,7 +20,7 @@ services:
 
   proxy:
     build: ./proxy
-    container_name: 'reverse-proxy'
+    container_name: reverse-proxy
     restart: unless-stopped
     ports:
       - 80:80
@@ -37,7 +37,7 @@ services:
 
   acme:
     image: nginxproxy/acme-companion
-    container_name: 'acme'
+    container_name: acme
     depends_on:
       - proxy
     restart: unless-stopped
@@ -79,17 +79,23 @@ services:
       - vpn
 
   home:
-    image: nginx
-    container_name: 'home'
+    image: linuxserver/heimdall:latest
+    container_name: home
     restart: unless-stopped
+    volumes:
+      - /home/heimdall:/config
+    environment:
+      - PUID=1000
+      - PGID=1000
     env_file:
       - secrets/home.env
+      - secrets/timezone.env
     networks:
       - proxy-tier
 
   nextcloud-app:
     image: nextcloud:fpm-alpine
-    container_name: 'nextcloud-app'
+    container_name: nextcloud-app
     depends_on:
       - nextcloud-db
       - nextcloud-redis
@@ -107,7 +113,7 @@ services:
 
   nextcloud-server:
     build: ./nextcloud/server
-    container_name: 'nextcloud-server'
+    container_name: nextcloud-server
     depends_on:
       - nextcloud-app
     restart: unless-stopped
@@ -124,7 +130,7 @@ services:
   nextcloud-cron:
     image: nextcloud:fpm-alpine
     entrypoint: /cron.sh
-    container_name: 'nextcloud-cron'
+    container_name: nextcloud-cron
     depends_on:
       - nextcloud-db
       - nextcloud-redis
@@ -137,7 +143,7 @@ services:
   nextcloud-db:
     image: mariadb
     command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
-    container_name: 'nextcloud-db'
+    container_name: nextcloud-db
     restart: unless-stopped
     volumes:
       - db:/var/lib/mysql
@@ -152,7 +158,7 @@ services:
 
   nextcloud-redis:
     image: redis:alpine
-    container_name: 'nextcloud-redis'
+    container_name: nextcloud-redis
     restart: unless-stopped
     networks:
       - nextcloud
@@ -160,7 +166,7 @@ services:
   hass:
     image: ghcr.io/home-assistant/home-assistant:stable
     privileged: true
-    container_name: 'home-assistant'
+    container_name: home-assistant
     restart: unless-stopped
     ports:
       - 8123:8123
@@ -176,7 +182,7 @@ services:
   zwave-js-ui:
     image: zwavejs/zwave-js-ui:latest
     tty: true
-    container_name: 'zwave-js-ui'
+    container_name: zwave-js-ui
     depends_on:
       - hass
     restart: unless-stopped
@@ -198,7 +204,7 @@ services:
 
   plex:
     image: plexinc/pms-docker
-    container_name: 'plex-media-server'
+    container_name: plex-media-server
     hostname: plex-media-server
     restart: unless-stopped
     ports:
@@ -225,7 +231,6 @@ services:
       - proxy-tier
 
   transmission:
-    # image: lscr.io/linuxserver/transmission:latest
     image: linuxserver/transmission:latest
     container_name: transmission
     depends_on:
