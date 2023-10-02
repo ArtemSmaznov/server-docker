@@ -142,6 +142,8 @@ services:
     image: linuxserver/heimdall:latest
     container_name: home
     restart: unless-stopped
+    ports:
+      - 8080:80
     volumes:
       - /home/heimdall:/config
     environment:
