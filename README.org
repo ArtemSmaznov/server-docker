@@ -2,19 +2,22 @@
 #+author:      Artem Smaznov
 #+description: Docker setup for my server
 #+startup:     overview
+#+property:    header-args :tangle docker-compose.yml
 #+auto_tangle: t
-
-Docker setup for running:
-- Nextcloud in a ~subdir~ with =fpm=, =mariaDB= and =nginx-proxy=
 
 * Table of Contents :toc:
 - [[#usage][Usage]]
-- [[#docker-compose][Docker Compose]]
-  - [[#init-section][Init Section]]
-  - [[#volumes][Volumes]]
-  - [[#networks][Networks]]
-  - [[#services][Services]]
-- [[#secrets-examples][Secrets Examples]]
+- [[#version][Version]]
+- [[#volumes][Volumes]]
+- [[#networks][Networks]]
+- [[#services][Services]]
+  - [[#reverse-proxy][Reverse Proxy]]
+  - [[#vpn][VPN]]
+  - [[#home][Home]]
+  - [[#nextcloud][Nextcloud]]
+  - [[#home-assistant][Home Assistant]]
+  - [[#plex][Plex]]
+  - [[#transmission][Transmission]]
 
 * Usage
 Bring server up
@@ -32,16 +35,12 @@ Update images
 docker-compose build --pull
 #+end_example
 
-* Docker Compose
-:PROPERTIES:
-:header-args: :tangle docker-compose.yml
-:END:
-** Init Section
+* Version
 #+begin_src yaml
 version: '3'
 #+end_src
 
-** Volumes
+* Volumes
 #+begin_src yaml
 volumes:
   db:
@@ -51,7 +50,7 @@ volumes:
   html:
 #+end_src
 
-** Networks
+* Networks
 #+begin_src yaml
 networks:
   proxy-tier:
@@ -63,12 +62,12 @@ networks:
   vpn:
 #+end_src
 
-** Services
+* Services
 #+begin_src yaml
 services:
 #+end_src
-*** Reverse Proxy
-**** Proxy
+** Reverse Proxy
+*** Proxy
 #+begin_src yaml
   proxy:
     build: ./proxy
@@ -88,7 +87,7 @@ services:
       - proxy-tier
 #+end_src
 
-**** Let's Encrypt Companion
+*** Let's Encrypt Companion
 #+begin_src yaml
   acme:
     image: nginxproxy/acme-companion
@@ -106,7 +105,7 @@ services:
       - proxy-tier
 #+end_src
 
-*** VPN
+** VPN
 #+begin_src yaml
   wireguard:
     image: linuxserver/wireguard:latest
@@ -137,7 +136,7 @@ services:
       - vpn
 #+end_src
 
-*** Home
+** Home
 #+begin_src yaml
   home:
     image: nginx
@@ -149,8 +148,8 @@ services:
       - proxy-tier
 #+end_src
 
-*** Nextcloud
-**** App
+** Nextcloud
+*** App
 #+begin_src yaml
   nextcloud-app:
     image: nextcloud:fpm-alpine
@@ -171,7 +170,7 @@ services:
       - nextcloud
 #+end_src
 
-**** Server
+*** Server
 #+begin_src yaml
   nextcloud-server:
     build: ./nextcloud/server
@@ -190,7 +189,7 @@ services:
       - nextcloud
 #+end_src
 
-**** Cron
+*** Cron
 #+begin_src yaml
   nextcloud-cron:
     image: nextcloud:fpm-alpine
@@ -206,7 +205,7 @@ services:
       - nextcloud
 #+end_src
 
-**** Database
+*** Database
 #+begin_src yaml
   nextcloud-db:
     image: mariadb
@@ -225,7 +224,7 @@ services:
       - nextcloud
 #+end_src
 
-**** Redis
+*** Redis
 #+begin_src yaml
   nextcloud-redis:
     image: redis:alpine
@@ -235,8 +234,8 @@ services:
       - nextcloud
 #+end_src
 
-*** Home Assistant
-**** App
+** Home Assistant
+*** App
 #+begin_src yaml
   hass:
     image: ghcr.io/home-assistant/home-assistant:stable
@@ -255,7 +254,7 @@ services:
       - home-assistant
 #+end_src
 
-**** Z-Wave JS UI
+*** Z-Wave JS UI
 #+begin_src yaml
   zwave-js-ui:
     image: zwavejs/zwave-js-ui:latest
@@ -281,7 +280,7 @@ services:
       - home-assistant
 #+end_src
 
-*** Plex
+** Plex
 #+begin_src yaml
   plex:
     image: plexinc/pms-docker
@@ -312,7 +311,7 @@ services:
       - proxy-tier
 #+end_src
 
-*** Transmission
+** Transmission
 https://spad.uk/wireguard-as-a-vpn-client-in-docker-using-pia/
 https://github.com/SebDanielsson/compose-transmission-wireguard
 Still needs work on opening 51413 port
@@ -339,23 +338,3 @@ Still needs work on opening 51413 port
     #   - vpn
 #+end_src
 
-* Secrets Examples
-~db.env~ example
-#+begin_example yaml
-MYSQL_DATABASE=nextcloud
-MYSQL_USER=nextcloud
-MYSQL_PASSWORD=MySqLpAsSw0rD
-#+end_example
-
-~db-root.env~ example
-#+begin_example yaml
-MYSQL_ROOT_PASSWORD=MyRoOtSqLpAsSw0rD
-#+end_example
-
-~app.env~ example
-#+begin_example yaml
-VIRTUAL_HOST=my.domain.com
-VIRTUAL_PORT=80
-LETSENCRYPT_HOST=my.domain.com
-LETSENCRYPT_EMAIL=my@email.com
-#+end_example
