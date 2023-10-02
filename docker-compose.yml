@@ -57,7 +57,7 @@ services:
     ports:
       - 51820:51820/udp
       # transmission
-      - 9091:9091
+      - 9091:9091/tcp
       - 51413:51413
       - 51413:51413/udp
     sysctls:
@@ -225,8 +225,11 @@ services:
       - proxy-tier
 
   transmission:
-    image: lscr.io/linuxserver/transmission:latest
+    # image: lscr.io/linuxserver/transmission:latest
+    image: linuxserver/transmission:latest
     container_name: transmission
+    depends_on:
+      - wireguard
     restart: unless-stopped
     volumes:
       - /home/transmission/config:/config
@@ -236,6 +239,7 @@ services:
       - PUID=1000
       - PGID=1000
     env_file:
+      - secrets/transmission.env
       - secrets/timezone.env
     network_mode: service:wireguard
     # networks:

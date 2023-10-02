@@ -115,7 +115,7 @@ services:
     ports:
       - 51820:51820/udp
       # transmission
-      - 9091:9091
+      - 9091:9091/tcp
       - 51413:51413
       - 51413:51413/udp
     sysctls:
@@ -314,11 +314,15 @@ services:
 
 *** Transmission
 https://spad.uk/wireguard-as-a-vpn-client-in-docker-using-pia/
+https://github.com/SebDanielsson/compose-transmission-wireguard
 Still needs work on opening 51413 port
 #+begin_src yaml
   transmission:
-    image: lscr.io/linuxserver/transmission:latest
+    # image: lscr.io/linuxserver/transmission:latest
+    image: linuxserver/transmission:latest
     container_name: transmission
+    depends_on:
+      - wireguard
     restart: unless-stopped
     volumes:
       - /home/transmission/config:/config
@@ -328,6 +332,7 @@ Still needs work on opening 51413 port
       - PUID=1000
       - PGID=1000
     env_file:
+      - secrets/transmission.env
       - secrets/timezone.env
     network_mode: service:wireguard
     # networks:
