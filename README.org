@@ -10,14 +10,15 @@
 - [[#version][Version]]
 - [[#volumes][Volumes]]
 - [[#networks][Networks]]
+- [[#secrets][Secrets]]
 - [[#services][Services]]
   - [[#reverse-proxy][Reverse Proxy]]
-  - [[#vpn][VPN]]
   - [[#home][Home]]
+  - [[#vpn][VPN]]
+  - [[#transmission][Transmission]]
   - [[#nextcloud][Nextcloud]]
   - [[#home-assistant][Home Assistant]]
   - [[#plex][Plex]]
-  - [[#transmission][Transmission]]
   - [[#anki][Anki]]
 
 * Usage
@@ -63,6 +64,17 @@ networks:
   vpn:
 #+end_src
 
+* Secrets
+#+begin_src yaml
+secrets:
+  db_password:
+    file: secrets/db_password
+  db_root_password:
+    file: secrets/db_root_password
+  transmission_password:
+    file: secrets/transmission_password
+#+end_src
+
 * Services
 #+begin_src yaml
 services:
@@ -102,6 +114,31 @@ services:
       - vhost.d:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - DEFAULT_EMAIL=${MY_EMAIL}
+    networks:
+      - proxy-tier
+#+end_src
+
+** Home
+#+begin_src yaml
+  home:
+    image: linuxserver/heimdall:latest
+    container_name: home
+    restart: unless-stopped
+    ports:
+      - ${HOME_LOCAL_PORT}:80
+    volumes:
+      - /home/heimdall:/config
+    environment:
+      - VIRTUAL_HOST=${HOME_HOST}
+      - VIRTUAL_PORT=443
+      - VIRTUAL_PROTO=https
+      - LETSENCRYPT_HOST=${HOME_HOST}
+      - LETSENCRYPT_EMAIL=${MY_EMAIL}
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TIME_ZONE}
     networks:
       - proxy-tier
 #+end_src
@@ -113,11 +150,11 @@ services:
     container_name: wireguard
     restart: unless-stopped
     ports:
-      - 51820:51820/udp
+      - ${VPN_PORT}:${VPN_PORT}/udp
       # transmission
-      - 9091:9091/tcp
-      - 51413:51413
-      - 51413:51413/udp
+      - ${TRANSMISSION_WEBUI_PORT}:${TRANSMISSION_WEBUI_PORT}/tcp
+      - ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}
+      - ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}/udp
     sysctls:
       - net.ipv4.conf.all.src_valid_mark=1
       - net.ipv6.conf.all.disable_ipv6=1
@@ -128,33 +165,40 @@ services:
       - /home/wireguard:/config
       - /lib/modules:/lib/modules
     environment:
-      - PUID=1000
-      - PGID=1000
-    env_file:
-      - secrets/wireguard.env
-      - secrets/timezone.env
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TIME_ZONE}
+      - SERVERPORT=${VPN_PORT}
+      # - INTERNAL_SUBNET=10.13.13.0 #optional
+      - ALLOWEDIPS=0.0.0.0/0 #optional
     networks:
       - vpn
 #+end_src
 
-** Home
+** Transmission
+Still needs work on opening the peer port
 #+begin_src yaml
-  home:
-    image: linuxserver/heimdall:latest
-    container_name: home
+  transmission:
+    image: linuxserver/transmission:latest
+    container_name: transmission
+    depends_on:
+      - wireguard
     restart: unless-stopped
-    ports:
-      - 8080:80
     volumes:
-      - /home/heimdall:/config
+      - /home/transmission/config:/config
+      - /home/transmission/downloads:/downloads
+      - /home/transmission/watch:/watch
     environment:
-      - PUID=1000
-      - PGID=1000
-    env_file:
-      - secrets/home.env
-      - secrets/timezone.env
-    networks:
-      - proxy-tier
+      - WEBUI_PORT=${TRANSMISSION_WEBUI_PORT}
+      - PEERPORT=${TRANSMISSION_PEER_PORT}
+      - USER=${MY_USERNAME}
+      - FILE__PASS=/run/secrets/transmission_password
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TIME_ZONE}
+    secrets:
+      - transmission_password
+    network_mode: service:wireguard
 #+end_src
 
 ** Nextcloud
@@ -173,8 +217,11 @@ services:
     environment:
       - MYSQL_HOST=nextcloud-db
       - REDIS_HOST=nextcloud-redis
-    env_file:
-      - secrets/db.env
+      - MYSQL_DATABASE=${NEXTCLOUD_DB_NAME}
+      - MYSQL_USER=${NEXTCLOUD_DB_USER}
+      - MYSQL_PASSWORD_FILE=/run/secrets/db_password
+    secrets:
+      - db_password
     networks:
       - nextcloud
 #+end_src
@@ -188,11 +235,14 @@ services:
       - nextcloud-app
     restart: unless-stopped
     ports:
-      - 9000:80
+      - ${NEXTCLOUD_LOCAL_PORT}:80
     volumes:
       - /home/nextcloud:/var/www/html:ro
-    env_file:
-      - secrets/nextcloud.env
+    environment:
+      - VIRTUAL_HOST=${NEXTCLOUD_HOST}
+      - VIRTUAL_PORT=80
+      - LETSENCRYPT_HOST=${NEXTCLOUD_HOST}
+      - LETSENCRYPT_EMAIL=${MY_EMAIL}
     networks:
       - proxy-tier
       - nextcloud
@@ -226,9 +276,13 @@ services:
     environment:
       - MARIADB_AUTO_UPGRADE=1
       - MARIADB_DISABLE_UPGRADE_BACKUP=1
-    env_file:
-      - secrets/db.env
-      - secrets/db-root.env
+      - MYSQL_DATABASE=${NEXTCLOUD_DB_NAME}
+      - MYSQL_USER=${NEXTCLOUD_DB_USER}
+      - MYSQL_PASSWORD_FILE=/run/secrets/db_password
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db_root_password
+    secrets:
+      - db_password
+      - db_root_password
     networks:
       - nextcloud
 #+end_src
@@ -252,12 +306,15 @@ services:
     container_name: home-assistant
     restart: unless-stopped
     ports:
-      - 8123:8123
+      - ${HOME_ASSISTANT_LOCAL_PORT}:8123
     volumes:
       - /home/home-assistant/config:/config
       - /etc/localtime:/etc/localtime:ro
-    env_file:
-      - secrets/homeassistant.env
+    environment:
+      - VIRTUAL_HOST=${HOME_ASSISTANT_HOST}
+      - VIRTUAL_PORT=8123
+      - LETSENCRYPT_HOST=${HOME_ASSISTANT_HOST}
+      - LETSENCRYPT_EMAIL=${MY_EMAIL}
     networks:
       - proxy-tier
       - home-assistant
@@ -282,9 +339,9 @@ services:
       - /dev/serial/by-id/usb-0658_0200-if00:/dev/zwave
     environment:
       - ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
+      - TZ=${TIME_ZONE}
     env_file:
       - secrets/zwave-js-ui.env
-      - secrets/timezone.env
     networks:
       - home-assistant
 #+end_src
@@ -297,7 +354,7 @@ services:
     hostname: plex-media-server
     restart: unless-stopped
     ports:
-      - 32400:32400/tcp
+      - ${PLEX_LOCAL_PORT}:32400/tcp
       - 8324:8324/tcp
       - 32469:32469/tcp
       - 1900:1900/udp
@@ -311,41 +368,17 @@ services:
       - /home/transmission/downloads/media:/data
       - /home/music:/data/music
     environment:
-      - PLEX_UID=1000
-      - PLEX_GID=1000
-    env_file:
-      - secrets/plex.env
-      - secrets/timezone.env
+      - VIRTUAL_HOST=${PLEX_HOST}
+      - VIRTUAL_PORT=32400
+      - LETSENCRYPT_HOST=${PLEX_HOST}
+      - LETSENCRYPT_EMAIL=${MY_EMAIL}
+      - PLEX_CLAIM=
+      - PLEX_UID=${UID}
+      - PLEX_GID=${GID}
+      - TZ=${TIME_ZONE}
     networks:
       - proxy-tier
 #+end_src
-
-** Transmission
-https://spad.uk/wireguard-as-a-vpn-client-in-docker-using-pia/
-https://github.com/SebDanielsson/compose-transmission-wireguard
-Still needs work on opening 51413 port
-#+begin_src yaml
-  transmission:
-    image: linuxserver/transmission:latest
-    container_name: transmission
-    depends_on:
-      - wireguard
-    restart: unless-stopped
-    volumes:
-      - /home/transmission/config:/config
-      - /home/transmission/downloads:/downloads
-      - /home/transmission/watch:/watch
-    environment:
-      - PUID=1000
-      - PGID=1000
-    env_file:
-      - secrets/transmission.env
-      - secrets/timezone.env
-    network_mode: service:wireguard
-    # networks:
-    #   - vpn
-#+end_src
-
 
 ** Anki
 #+begin_src yaml :tangle no
@@ -354,14 +387,14 @@ Still needs work on opening 51413 port
     container_name: anki
     restart: unless-stopped
     ports:
-      - 27701:27701
+      - ${ANKI_LOCAL_PORT}:27701
     volumes:
       - /home/anki:/app/data
     environment:
-      - PLEX_UID=1000
-      - PLEX_GID=1000
-    env_file:
-      - secrets/anki.env
+      - VIRTUAL_HOST=${ANKI_HOST}
+      - VIRTUAL_PORT=27701
+      - LETSENCRYPT_HOST=${ANKI_HOST}
+      - LETSENCRYPT_EMAIL=${MY_EMAIL}
     networks:
       - proxy-tier
 #+end_src
