@@ -251,3 +251,19 @@ services:
     network_mode: service:wireguard
     # networks:
     #   - vpn
+
+  anki:
+    image: kuklinistvan/anki-sync-server:latest
+    container_name: anki
+    restart: unless-stopped
+    ports:
+      - 27701:27701
+    volumes:
+      - /home/anki:/app/data
+    environment:
+      - PLEX_UID=1000
+      - PLEX_GID=1000
+    env_file:
+      - secrets/anki.env
+    networks:
+      - proxy-tier
