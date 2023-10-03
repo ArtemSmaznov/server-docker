@@ -288,3 +288,19 @@ services:
       - TZ=${TIME_ZONE}
     networks:
       - proxy-tier
+
+  asf:
+    image: justarchi/archisteamfarm
+    container_name: asf
+    restart: unless-stopped
+    ports:
+      - ${ASF_LOCAL_PORT}:1242
+    volumes:
+      - /home/asf:/app/config
+    environment:
+      - VIRTUAL_HOST=${ASF_HOST}
+      - VIRTUAL_PORT=1242
+      - LETSENCRYPT_HOST=${ASF_HOST}
+      - LETSENCRYPT_EMAIL=${MY_EMAIL}
+    networks:
+      - proxy-tier
