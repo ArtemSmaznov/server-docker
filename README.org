@@ -127,8 +127,6 @@ services:
     image: linuxserver/heimdall:latest
     container_name: home
     restart: unless-stopped
-    ports:
-      - ${HOME_LOCAL_PORT}:80
     volumes:
       - /home/heimdall:/config
     environment:
@@ -392,8 +390,6 @@ Still needs work on opening the peer port
     image: kuklinistvan/anki-sync-server:latest
     container_name: anki
     restart: unless-stopped
-    ports:
-      - ${ANKI_LOCAL_PORT}:27701
     volumes:
       - /home/anki:/app/data
     environment:
@@ -411,8 +407,6 @@ Still needs work on opening the peer port
     image: justarchi/archisteamfarm
     container_name: asf
     restart: unless-stopped
-    ports:
-      - ${ASF_LOCAL_PORT}:1242
     volumes:
       - /home/asf:/app/config
     environment:

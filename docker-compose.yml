@@ -64,8 +64,6 @@ services:
     image: linuxserver/heimdall:latest
     container_name: home
     restart: unless-stopped
-    ports:
-      - ${HOME_LOCAL_PORT}:80
     volumes:
       - /home/heimdall:/config
     environment:
@@ -293,8 +291,6 @@ services:
     image: justarchi/archisteamfarm
     container_name: asf
     restart: unless-stopped
-    ports:
-      - ${ASF_LOCAL_PORT}:1242
     volumes:
       - /home/asf:/app/config
     environment:
