@@ -143,13 +143,16 @@ services:
 #+end_src
 
 ** VPN
+*** WireGuard
 #+begin_src yaml
   wireguard:
     image: linuxserver/wireguard:latest
     container_name: wireguard
     restart: unless-stopped
     ports:
-      - ${VPN_PORT}:${VPN_PORT}/udp
+      - ${WIREGUARD_PORT}:${WIREGUARD_PORT}/udp
+      # wireguard-ui
+      - ${WIREGUARD_UI_LOCAL_PORT}:5000
       # transmission
       - ${TRANSMISSION_WEBUI_PORT}:${TRANSMISSION_WEBUI_PORT}/tcp
       - ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}
@@ -171,12 +174,42 @@ services:
       - PUID=${UID}
       - PGID=${GID}
       - TZ=${TIME_ZONE}
-      - SERVERPORT=${VPN_PORT}
+      - SERVERPORT=${WIREGUARD_PORT}
       # - INTERNAL_SUBNET=10.13.13.0 #optional
       - ALLOWEDIPS=0.0.0.0/0 #optional
     networks:
       - proxy-tier
       # - vpn
+#+end_src
+
+*** WireGuard UI
+#+begin_src yaml
+  wireguard-ui:
+    image: ngoduykhanh/wireguard-ui:latest
+    container_name: wireguard-ui
+    depends_on:
+      - wireguard
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - /home/wireguard:/etc/wireguard
+    environment:
+      - SENDGRID_API_KEY
+      - EMAIL_FROM_ADDRESS
+      - EMAIL_FROM_NAME
+      - SESSION_SECRET
+      - WGUI_USERNAME=${MY_USERNAME}
+      - WG_CONF_TEMPLATE
+      - WGUI_MANAGE_START=true
+      - WGUI_MANAGE_RESTART=true
+    env_file:
+      - secrets/wireguard-ui.env
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+    network_mode: service:wireguard
 #+end_src
 
 ** Transmission
@@ -384,7 +417,7 @@ Still needs work on opening the peer port
       - proxy-tier
 #+end_src
 
-** Anki
+** TODO Anki
 #+begin_src yaml :tangle no
   anki:
     image: kuklinistvan/anki-sync-server:latest
