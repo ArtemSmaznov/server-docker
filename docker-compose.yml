@@ -100,6 +100,10 @@ services:
       - /home/wireguard:/config
       - /lib/modules:/lib/modules
     environment:
+      - VIRTUAL_HOST=${TRANSMISSION_HOST}
+      - VIRTUAL_PORT=${TRANSMISSION_WEBUI_PORT}
+      - LETSENCRYPT_HOST=${TRANSMISSION_HOST}
+      - LETSENCRYPT_EMAIL=${MY_EMAIL}
       - PUID=${UID}
       - PGID=${GID}
       - TZ=${TIME_ZONE}
@@ -107,7 +111,8 @@ services:
       # - INTERNAL_SUBNET=10.13.13.0 #optional
       - ALLOWEDIPS=0.0.0.0/0 #optional
     networks:
-      - vpn
+      - proxy-tier
+      # - vpn
 
   transmission:
     image: linuxserver/transmission:latest
