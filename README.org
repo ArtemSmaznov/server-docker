@@ -348,7 +348,7 @@ Still needs work on opening 51413 port
 
 
 ** Anki
-#+begin_src yaml
+#+begin_src yaml :tangle no
   anki:
     image: kuklinistvan/anki-sync-server:latest
     container_name: anki
