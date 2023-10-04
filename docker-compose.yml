@@ -315,19 +315,24 @@ services:
     restart: unless-stopped
     stop_signal: SIGINT
     ports:
-      - 8091:8091 # port for web interface
+      - ${ZWAVE_JS_LOCAL_PORT}:8091 # port for web interface
       - 3000:3000 # port for Z-Wave JS websocket server
     volumes:
       - /home/home-assistant/zwave:/usr/src/app/store
     devices:
       - /dev/serial/by-id/usb-0658_0200-if00:/dev/zwave
     environment:
+      - VIRTUAL_HOST=${ZWAVE_JS_HOST}
+      - VIRTUAL_PORT=8091
+      - LETSENCRYPT_HOST=${ZWAVE_JS_HOST}
+      - LETSENCRYPT_EMAIL=${MY_EMAIL}
       - ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
       - TZ=${TIME_ZONE}
     env_file:
       - secrets/zwave-js-ui.env
     networks:
       - home-assistant
+      - proxy-tier
 
   plex:
     image: plexinc/pms-docker
