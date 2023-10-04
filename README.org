@@ -416,7 +416,6 @@ Still needs work on opening the peer port
     restart: unless-stopped
     stop_signal: SIGINT
     ports:
-      - ${ZWAVE_JS_LOCAL_PORT}:8091 # port for web interface
       - 3000:3000 # port for Z-Wave JS websocket server
     volumes:
       - /home/home-assistant/zwave:/usr/src/app/store
