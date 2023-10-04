@@ -90,7 +90,14 @@ services:
       # Resolve to nothing domains (terminate connection)
       - "nw2master.bioware.com nwn2.master.gamespy.com:0.0.0.0"
       # LAN hostnames for other docker containers using nginx-proxy
-      - "${MY_DOMAIN}:${MY_SERVER_IP}"
+      - ${HOST_1}
+      - ${HOST_2}
+      - ${HOST_3}
+      - ${HOST_4}
+      - ${HOST_5}
+      - ${HOST_6}
+      - ${HOST_7}
+      - ${HOST_8}
       - "pi-hole pi-hole.${MY_DOMAIN}:${MY_SERVER_IP}"
     secrets:
       - pihole_password
