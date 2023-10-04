@@ -135,7 +135,6 @@ services:
       - 53:53/tcp
       - 53:53/udp
       - 67:67/udp
-      - ${PIHOLE_LOCAL_PORT}:80/tcp
     cap_add:
       - NET_ADMIN
     volumes:
@@ -167,6 +166,7 @@ services:
       - pihole_password
     networks:
       - proxy-tier
+      - home-assistant
 #+end_src
 
 ** Home
