@@ -501,6 +501,7 @@ Still needs work on opening the peer port
       - TZ=${TIME_ZONE}
     networks:
       - proxy-tier
+      - home-assistant
 #+end_src
 
 ** TODO Anki

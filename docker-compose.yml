@@ -391,6 +391,7 @@ services:
       - TZ=${TIME_ZONE}
     networks:
       - proxy-tier
+      - home-assistant
 
   asf:
     image: justarchi/archisteamfarm
