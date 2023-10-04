@@ -333,6 +333,34 @@ services:
       - home-assistant
       - proxy-tier
 
+  piper:
+    image: rhasspy/wyoming-piper
+    container_name: piper
+    depends_on:
+      - hass
+    restart: unless-stopped
+    ports:
+      - 10200:10200
+    volumes:
+      - /home/home-assistant/wyoming-piper:/data
+    command: --voice=en_US-lessac-medium
+    networks:
+      - home-assistant
+
+  whisper:
+    image: rhasspy/wyoming-whisper
+    container_name: whisper
+    depends_on:
+      - hass
+    restart: unless-stopped
+    ports:
+      - 10300:10300
+    volumes:
+      - /home/home-assistant/wyoming-whisper:/data
+    command: --model=small --language=en
+    networks:
+      - home-assistant
+
   plex:
     image: plexinc/pms-docker
     container_name: plex-media-server
