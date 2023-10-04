@@ -129,6 +129,7 @@ services:
   pi-hole:
     image: pihole/pihole:latest
     container_name: pi-hole
+    hostname: pi-hole
     restart: unless-stopped
     ports:
       - 53:53/tcp
