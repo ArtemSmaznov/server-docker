@@ -227,6 +227,7 @@ services:
       - ALLOWEDIPS=0.0.0.0/0 #optional
     networks:
       - proxy-tier
+      - home-assistant
       # - vpn
 #+end_src
 
@@ -331,6 +332,7 @@ Still needs work on opening the peer port
     networks:
       - proxy-tier
       - nextcloud
+      - home-assistant
 #+end_src
 
 *** Cron

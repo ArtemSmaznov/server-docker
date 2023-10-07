@@ -156,6 +156,7 @@ services:
       - ALLOWEDIPS=0.0.0.0/0 #optional
     networks:
       - proxy-tier
+      - home-assistant
       # - vpn
 
   wireguard-ui:
@@ -246,6 +247,7 @@ services:
     networks:
       - proxy-tier
       - nextcloud
+      - home-assistant
 
   nextcloud-cron:
     image: nextcloud:fpm-alpine
