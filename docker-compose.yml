@@ -87,7 +87,7 @@ services:
       - TZ=${TIME_ZONE}
     extra_hosts:
       # Resolve to nothing domains (terminate connection)
-      - "nw2master.bioware.com nwn2.master.gamespy.com:0.0.0.0"
+      - 'nw2master.bioware.com nwn2.master.gamespy.com:0.0.0.0'
       # LAN hostnames for other docker containers using nginx-proxy
       - ${HOST_1}
       - ${HOST_2}
@@ -97,7 +97,7 @@ services:
       - ${HOST_6}
       - ${HOST_7}
       - ${HOST_8}
-      - "pi-hole pi-hole.${MY_DOMAIN}:${MY_SERVER_IP}"
+      - 'pi-hole pi-hole.${MY_DOMAIN}:${MY_SERVER_IP}'
     secrets:
       - pihole_password
     networks:
@@ -232,6 +232,7 @@ services:
   nextcloud-server:
     build: ./nextcloud/server
     container_name: nextcloud-server
+    hostname: nextcloud
     depends_on:
       - nextcloud-app
     restart: unless-stopped
