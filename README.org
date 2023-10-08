@@ -89,7 +89,7 @@ services:
   proxy:
     build: ./proxy
     container_name: reverse-proxy
-    restart: unless-stopped
+    restart: always
     ports:
       - 80:80
       - 443:443
@@ -111,7 +111,7 @@ services:
     container_name: acme
     depends_on:
       - proxy
-    restart: unless-stopped
+    restart: always
     volumes:
       - certs:/etc/nginx/certs
       - acme:/etc/acme.sh
@@ -130,7 +130,7 @@ services:
     image: pihole/pihole:latest
     container_name: pi-hole
     hostname: pi-hole
-    restart: unless-stopped
+    restart: always
     ports:
       - 53:53/tcp
       - 53:53/udp
