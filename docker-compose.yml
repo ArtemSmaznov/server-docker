@@ -12,7 +12,10 @@ networks:
     ipam:
       config:
         - subnet: 172.10.0.0/24
-  home-assistant:
+  hass:
+    ipam:
+      config:
+        - subnet: 172.11.0.0/24
   nextcloud:
   vpn:
 
@@ -102,7 +105,7 @@ services:
       - pihole_password
     networks:
       - proxy-tier
-      - home-assistant
+      - hass
 
   home:
     image: linuxserver/heimdall:latest
@@ -156,7 +159,7 @@ services:
       - ALLOWEDIPS=0.0.0.0/0 #optional
     networks:
       - proxy-tier
-      - home-assistant
+      - hass
       # - vpn
 
   wireguard-ui:
@@ -248,7 +251,7 @@ services:
     networks:
       - proxy-tier
       - nextcloud
-      - home-assistant
+      - hass
 
   nextcloud-cron:
     image: nextcloud:fpm-alpine
@@ -307,7 +310,7 @@ services:
       - LETSENCRYPT_EMAIL=${MY_EMAIL}
     networks:
       - proxy-tier
-      - home-assistant
+      - hass
 
   zwave-js-ui:
     image: zwavejs/zwave-js-ui:latest
@@ -333,7 +336,7 @@ services:
     env_file:
       - secrets/zwave-js-ui.env
     networks:
-      - home-assistant
+      - hass
       - proxy-tier
 
   piper:
@@ -348,7 +351,7 @@ services:
       - /home/home-assistant/wyoming-piper:/data
     command: --voice=en_US-lessac-medium
     networks:
-      - home-assistant
+      - hass
 
   whisper:
     image: rhasspy/wyoming-whisper
@@ -362,7 +365,7 @@ services:
       - /home/home-assistant/wyoming-whisper:/data
     command: --model=small --language=en
     networks:
-      - home-assistant
+      - hass
 
   plex:
     image: plexinc/pms-docker
@@ -394,7 +397,7 @@ services:
       - TZ=${TIME_ZONE}
     networks:
       - proxy-tier
-      - home-assistant
+      - hass
 
   asf:
     image: justarchi/archisteamfarm

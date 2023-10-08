@@ -61,7 +61,10 @@ networks:
     ipam:
       config:
         - subnet: 172.10.0.0/24
-  home-assistant:
+  hass:
+    ipam:
+      config:
+        - subnet: 172.11.0.0/24
   nextcloud:
   vpn:
 #+end_src
@@ -166,7 +169,7 @@ services:
       - pihole_password
     networks:
       - proxy-tier
-      - home-assistant
+      - hass
 #+end_src
 
 ** Home
@@ -227,7 +230,7 @@ services:
       - ALLOWEDIPS=0.0.0.0/0 #optional
     networks:
       - proxy-tier
-      - home-assistant
+      - hass
       # - vpn
 #+end_src
 
@@ -333,7 +336,7 @@ Still needs work on opening the peer port
     networks:
       - proxy-tier
       - nextcloud
-      - home-assistant
+      - hass
 #+end_src
 
 *** Cron
@@ -405,7 +408,7 @@ Still needs work on opening the peer port
       - LETSENCRYPT_EMAIL=${MY_EMAIL}
     networks:
       - proxy-tier
-      - home-assistant
+      - hass
 #+end_src
 
 *** Z-Wave JS UI
@@ -434,7 +437,7 @@ Still needs work on opening the peer port
     env_file:
       - secrets/zwave-js-ui.env
     networks:
-      - home-assistant
+      - hass
       - proxy-tier
 #+end_src
 
@@ -452,7 +455,7 @@ Still needs work on opening the peer port
       - /home/home-assistant/wyoming-piper:/data
     command: --voice=en_US-lessac-medium
     networks:
-      - home-assistant
+      - hass
 #+end_src
 
 *** Wyoming Whisper
@@ -469,7 +472,7 @@ Still needs work on opening the peer port
       - /home/home-assistant/wyoming-whisper:/data
     command: --model=small --language=en
     networks:
-      - home-assistant
+      - hass
 #+end_src
 
 ** Plex
@@ -504,7 +507,7 @@ Still needs work on opening the peer port
       - TZ=${TIME_ZONE}
     networks:
       - proxy-tier
-      - home-assistant
+      - hass
 #+end_src
 
 ** TODO Anki
