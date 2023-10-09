@@ -227,6 +227,7 @@ services:
       - MYSQL_DATABASE=${NEXTCLOUD_DB_NAME}
       - MYSQL_USER=${NEXTCLOUD_DB_USER}
       - MYSQL_PASSWORD_FILE=/run/secrets/db_password
+      - PHP_MEMORY_LIMIT=2048M
     secrets:
       - db_password
     networks:
