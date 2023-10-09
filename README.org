@@ -44,10 +44,9 @@ docker-compose build --pull
 version: '3'
 #+end_src
 
-* Volumes
+* TODO Volumes
 #+begin_src yaml
 volumes:
-  db:
   certs:
   acme:
   vhost.d:
@@ -141,8 +140,8 @@ services:
     cap_add:
       - NET_ADMIN
     volumes:
-      - /home/pi-hole/etc:/etc/pihole
-      - /home/pi-hole/dnsmasq.d:/etc/dnsmasq.d
+      - /bigdiskx/pi-hole/etc:/etc/pihole
+      - /bigdiskx/pi-hole/dnsmasq.d:/etc/dnsmasq.d
     environment:
       - VIRTUAL_HOST=${PIHOLE_HOST}
       - VIRTUAL_PORT=80
@@ -179,7 +178,7 @@ services:
     container_name: home
     restart: unless-stopped
     volumes:
-      - /home/heimdall:/config
+      - /bigdiskx/heimdall:/config
     environment:
       - VIRTUAL_HOST=${HOME_HOST}
       - VIRTUAL_PORT=443
@@ -215,7 +214,7 @@ services:
     cap_add:
       - NET_ADMIN
     volumes:
-      - /home/wireguard:/config
+      - /bigdiskx/wireguard:/config
       - /lib/modules:/lib/modules
     environment:
       - VIRTUAL_HOST=${TRANSMISSION_HOST}
@@ -245,7 +244,7 @@ services:
     cap_add:
       - NET_ADMIN
     volumes:
-      - /home/wireguard:/etc/wireguard
+      - /bigdiskx/wireguard:/etc/wireguard
     environment:
       - SENDGRID_API_KEY
       - EMAIL_FROM_ADDRESS
@@ -274,9 +273,10 @@ Still needs work on opening the peer port
       - wireguard
     restart: unless-stopped
     volumes:
-      - /home/transmission/config:/config
-      - /home/transmission/downloads:/downloads
-      - /home/transmission/watch:/watch
+      - /bigdiskx/transmission/config:/config
+      - /bigdiskx/transmission/watch:/watch
+      - /bigdiskx/transmission/downloads:/downloads
+      - /bigdiskx/media:/downloads/media
     environment:
       - WEBUI_PORT=${TRANSMISSION_WEBUI_PORT}
       - PEERPORT=${TRANSMISSION_PEER_PORT}
@@ -301,8 +301,8 @@ Still needs work on opening the peer port
       - nextcloud-redis
     restart: unless-stopped
     volumes:
-      - /home/nextcloud:/var/www/html
-      - /home/music:/media/music
+      - /bigdiskx/nextcloud/app:/var/www/html
+      - /bigdiskx/media/music:/media/music
     environment:
       - MYSQL_HOST=nextcloud-db
       - REDIS_HOST=nextcloud-redis
@@ -328,7 +328,7 @@ Still needs work on opening the peer port
     ports:
       - ${NEXTCLOUD_LOCAL_PORT}:80
     volumes:
-      - /home/nextcloud:/var/www/html:ro
+      - /bigdiskx/nextcloud/app:/var/www/html:ro
     environment:
       - VIRTUAL_HOST=${NEXTCLOUD_HOST}
       - VIRTUAL_PORT=80
@@ -351,7 +351,7 @@ Still needs work on opening the peer port
       - nextcloud-redis
     restart: unless-stopped
     volumes:
-      - /home/nextcloud:/var/www/html
+      - /bigdiskx/nextcloud/app:/var/www/html
     networks:
       - nextcloud
 #+end_src
@@ -364,7 +364,7 @@ Still needs work on opening the peer port
     container_name: nextcloud-db
     restart: unless-stopped
     volumes:
-      - db:/var/lib/mysql
+      - /bigdiskx/nextcloud/db:/var/lib/mysql
     environment:
       - MARIADB_AUTO_UPGRADE=1
       - MARIADB_DISABLE_UPGRADE_BACKUP=1
@@ -400,7 +400,7 @@ Still needs work on opening the peer port
     ports:
       - ${HOME_ASSISTANT_LOCAL_PORT}:8123
     volumes:
-      - /home/home-assistant/config:/config
+      - /bigdiskx/home-assistant/config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
       - VIRTUAL_HOST=${HOME_ASSISTANT_HOST}
@@ -425,7 +425,7 @@ Still needs work on opening the peer port
     ports:
       - 3000:3000 # port for Z-Wave JS websocket server
     volumes:
-      - /home/home-assistant/zwave:/usr/src/app/store
+      - /bigdiskx/home-assistant/zwave:/usr/src/app/store
     devices:
       - /dev/serial/by-id/usb-0658_0200-if00:/dev/zwave
     environment:
@@ -453,7 +453,7 @@ Still needs work on opening the peer port
     ports:
       - 10200:10200
     volumes:
-      - /home/home-assistant/wyoming-piper:/data
+      - /bigdiskx/home-assistant/wyoming-piper:/data
     command: --voice=en_US-lessac-medium
     networks:
       - hass
@@ -470,7 +470,7 @@ Still needs work on opening the peer port
     ports:
       - 10300:10300
     volumes:
-      - /home/home-assistant/wyoming-whisper:/data
+      - /bigdiskx/home-assistant/wyoming-whisper:/data
     command: --model=small --language=en
     networks:
       - hass
@@ -493,10 +493,9 @@ Still needs work on opening the peer port
       - 32413:32413/udp
       - 32414:32414/udp
     volumes:
-      - /home/plex/config:/config
-      - /home/plex/transcode:/transcode
-      - /home/transmission/downloads/media:/data
-      - /home/music:/data/music
+      - /bigdiskx/plex/config:/config
+      - /bigdiskx/plex/transcode:/transcode
+      - /bigdiskx/media:/data
     environment:
       - VIRTUAL_HOST=${PLEX_HOST}
       - VIRTUAL_PORT=32400
@@ -518,7 +517,7 @@ Still needs work on opening the peer port
     container_name: anki
     restart: unless-stopped
     volumes:
-      - /home/anki:/app/data
+      - /bigdiskx/anki:/app/data
     environment:
       - VIRTUAL_HOST=${ANKI_HOST}
       - VIRTUAL_PORT=27701
@@ -535,7 +534,7 @@ Still needs work on opening the peer port
     container_name: asf
     restart: unless-stopped
     volumes:
-      - /home/asf:/app/config
+      - /bigdiskx/archi-steam-farm:/app/config
     environment:
       - VIRTUAL_HOST=${ASF_HOST}
       - VIRTUAL_PORT=1242
