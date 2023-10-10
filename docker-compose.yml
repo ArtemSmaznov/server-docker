@@ -1,11 +1,5 @@
 version: '3'
 
-volumes:
-  certs:
-  acme:
-  vhost.d:
-  html:
-
 networks:
   proxy-tier:
     ipam:
@@ -38,9 +32,9 @@ services:
       - 80:80
       - 443:443
     volumes:
-      - certs:/etc/nginx/certs:ro
-      - vhost.d:/etc/nginx/vhost.d
-      - html:/usr/share/nginx/html
+      - /bigdiskx/proxy/certs:/etc/nginx/certs:ro
+      - /bigdiskx/proxy/vhost.d:/etc/nginx/vhost.d
+      - /bigdiskx/proxy/html:/usr/share/nginx/html
       - /var/run/docker.sock:/tmp/docker.sock:ro
     labels:
       com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: 'true'
@@ -54,10 +48,10 @@ services:
       - proxy
     restart: always
     volumes:
-      - certs:/etc/nginx/certs
-      - acme:/etc/acme.sh
-      - vhost.d:/etc/nginx/vhost.d
-      - html:/usr/share/nginx/html
+      - /bigdiskx/proxy/certs:/etc/nginx/certs
+      - /bigdiskx/proxy/acme:/etc/acme.sh
+      - /bigdiskx/proxy/vhost.d:/etc/nginx/vhost.d
+      - /bigdiskx/proxy/html:/usr/share/nginx/html
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - DEFAULT_EMAIL=${MY_EMAIL}
