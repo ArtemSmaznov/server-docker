@@ -18,6 +18,7 @@
   - [[#transmission][Transmission]]
   - [[#nextcloud][Nextcloud]]
   - [[#home-assistant][Home Assistant]]
+  - [[#grafana][Grafana]]
   - [[#plex][Plex]]
   - [[#anki][Anki]]
   - [[#archi-steam-farm][Archi Steam Farm]]
@@ -56,6 +57,7 @@ networks:
         - subnet: 172.11.0.0/24
   nextcloud:
   vpn:
+  grafana:
 #+end_src
 
 * Secrets
@@ -386,6 +388,8 @@ Still needs work on opening the peer port
     image: ghcr.io/home-assistant/home-assistant:stable
     privileged: true
     container_name: home-assistant
+    depends_on:
+      - grafana-influxdb
     restart: unless-stopped
     ports:
       - ${HOME_ASSISTANT_LOCAL_PORT}:8123
@@ -413,7 +417,7 @@ Still needs work on opening the peer port
     restart: unless-stopped
     stop_signal: SIGINT
     ports:
-      - 3000:3000 # port for Z-Wave JS websocket server
+      - ${ZWAVE_JS_LOCAL_PORT}:3000 # port for Z-Wave JS websocket server
     volumes:
       - /bigdiskx/home-assistant/zwave:/usr/src/app/store
     devices:
@@ -463,6 +467,40 @@ Still needs work on opening the peer port
       - /bigdiskx/home-assistant/wyoming-whisper:/data
     command: --model=small --language=en
     networks:
+      - hass
+#+end_src
+
+** Grafana
+*** App
+#+begin_src yaml
+  grafana:
+    image: grafana/grafana-oss
+    container_name: grafana
+    depends_on:
+      - grafana-influxdb
+    restart: unless-stopped
+    user: '${UID}'
+    ports:
+      - ${GRAFANA_LOCAL_PORT}:3000
+    volumes:
+      - /bigdiskx/grafana/app:/var/lib/grafana
+    networks:
+      - grafana
+      - hass
+#+end_src
+
+*** Influx DB
+#+begin_src yaml
+  grafana-influxdb:
+    image: influxdb:latest
+    container_name: grafana-influxdb
+    restart: unless-stopped
+    ports:
+      - ${INFLUXDB_LOCAL_PORT}:8086
+    volumes:
+      - /bigdiskx/grafana/influxdb:/var/lib/influxdb2
+    networks:
+      - grafana
       - hass
 #+end_src
 
