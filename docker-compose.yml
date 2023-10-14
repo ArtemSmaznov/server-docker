@@ -12,6 +12,7 @@ networks:
   nextcloud:
   vpn:
   grafana:
+  webtrees:
 
 secrets:
   pihole_password:
@@ -20,6 +21,12 @@ secrets:
     file: secrets/db_password
   db_root_password:
     file: secrets/db_root_password
+  webtrees_password:
+    file: secrets/webtrees/password
+  webtrees_db_password:
+    file: secrets/webtrees/db_password
+  webtrees_db_root_password:
+    file: secrets/webtrees/db_root_password
   transmission_password:
     file: secrets/transmission_password
 
@@ -264,9 +271,9 @@ services:
 
   nextcloud-db:
     image: mariadb
-    command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     container_name: nextcloud-db
     restart: unless-stopped
+    command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     volumes:
       - /bigdiskx/nextcloud/db:/var/lib/mysql
     environment:
@@ -436,3 +443,66 @@ services:
       - LETSENCRYPT_EMAIL=${MY_EMAIL}
     networks:
       - proxy-tier
+
+  webtrees:
+    image: nathanvaughn/webtrees
+    container_name: webtrees
+    depends_on:
+      - webtrees-db
+    restart: unless-stopped
+    ports:
+      - ${WEBTREES_LOCAL_PORT}:80
+    volumes:
+      - /bigdiskx/webtrees/data:/var/www/webtrees/data
+      - /bigdiskx/webtrees/themes:/var/www/webtrees/modules_v4
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${WEBTREES_HOST}
+      VIRTUAL_PORT: 80
+      LETSENCRYPT_HOST: ${WEBTREES_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+      # app
+      PRETTY_URLS: true
+      HTTPS: false
+      HTTPS_REDIRECT: false
+      LANG: en-US
+      LOGIN_URL: "https://${WEBTREES_HOST}"
+      SERVER_URL: "https://${WEBTREES_HOST}"
+      BASE_URL: "https://${WEBTREES_HOST}"
+      DB_TYPE: mysql
+      DB_HOST: webtrees-db
+      DB_PORT: 3306
+      DB_NAME: ${WEBTREES_DB_NAME}
+      DB_USER: ${WEBTREES_DB_USER}
+      DB_PASS_FILE_FILE: /run/secrets/webtrees_db_password
+      DB_PREFIX: wt_
+      WT_NAME: ${MY_FULLNAME}
+      WT_EMAIL: ${MY_EMAIL}
+      WT_USER: ${MY_USERNAME}
+      WT_PASS_FILE: /run/secrets/webtrees_password
+    secrets:
+      - webtrees_password
+      - webtrees_db_password
+    networks:
+      - proxy-tier
+      - webtrees
+
+  webtrees-db:
+    image: mariadb
+    container_name: webtrees-db
+    restart: unless-stopped
+    command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
+    volumes:
+      - /bigdiskx/webtrees/db:/var/lib/mysql
+    environment:
+      - MARIADB_AUTO_UPGRADE=1
+      - MARIADB_DISABLE_UPGRADE_BACKUP=1
+      - MARIADB_DATABASE=${WEBTREES_DB_NAME}
+      - MARIADB_USER=${WEBTREES_DB_USER}
+      - MARIADB_PASSWORD_FILE=/run/secrets/webtrees_db_password
+      - MARIADB_ROOT_PASSWORD_FILE=/run/secrets/webtrees_db_root_password
+    secrets:
+      - webtrees_db_password
+      - webtrees_db_root_password
+    networks:
+      - webtrees
