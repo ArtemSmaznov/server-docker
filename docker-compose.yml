@@ -530,6 +530,8 @@ services:
       - /bigdiskx/mpd:/root/.config
       - /bigdiskx/media/music:/var/lib/mpd/music
       - /bigdiskx/media/playlists:/var/lib/mpd/playlists
+    devices:
+      - /dev/snd
     # environment:
     #   - VIRTUAL_HOST=${MPD_HOST}
     #   - VIRTUAL_PORT=1242
