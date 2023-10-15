@@ -518,3 +518,23 @@ services:
       - webtrees_db_root_password
     networks:
       - webtrees
+
+  mpd:
+    image: vimagick/mpd
+    container_name: mpd
+    restart: unless-stopped
+    ports:
+      - 6600:6600
+      - 8800:8800
+    volumes:
+      - /bigdiskx/mpd:/root/.config
+      - /bigdiskx/media/music:/var/lib/mpd/music
+      - /bigdiskx/media/playlists:/var/lib/mpd/playlists
+    # environment:
+    #   - VIRTUAL_HOST=${MPD_HOST}
+    #   - VIRTUAL_PORT=1242
+    #   - LETSENCRYPT_HOST=${MPD_HOST}
+    #   - LETSENCRYPT_EMAIL=${MY_EMAIL}
+    networks:
+      - proxy-tier
+      - hass

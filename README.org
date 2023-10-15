@@ -23,6 +23,7 @@
   - [[#anki][Anki]]
   - [[#archi-steam-farm][Archi Steam Farm]]
   - [[#web-trees][Web Trees]]
+  - [[#mpd][MPD]]
 
 * Usage
 Bring server up
@@ -663,5 +664,28 @@ Still needs work on opening the peer port
       - webtrees_db_root_password
     networks:
       - webtrees
+#+end_src
+
+** MPD
+#+begin_src yaml
+  mpd:
+    image: vimagick/mpd
+    container_name: mpd
+    restart: unless-stopped
+    ports:
+      - 6600:6600
+      - 8800:8800
+    volumes:
+      - /bigdiskx/mpd:/root/.config
+      - /bigdiskx/media/music:/var/lib/mpd/music
+      - /bigdiskx/media/playlists:/var/lib/mpd/playlists
+    # environment:
+    #   - VIRTUAL_HOST=${MPD_HOST}
+    #   - VIRTUAL_PORT=1242
+    #   - LETSENCRYPT_HOST=${MPD_HOST}
+    #   - LETSENCRYPT_EMAIL=${MY_EMAIL}
+    networks:
+      - proxy-tier
+      - hass
 #+end_src
 
