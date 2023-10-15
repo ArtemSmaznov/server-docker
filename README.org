@@ -478,6 +478,21 @@ Still needs work on opening the peer port
       - hass
 #+end_src
 
+*** Wyoming Open Wake Word
+#+begin_src yaml
+  openwakeword:
+    image: rhasspy/wyoming-openwakeword
+    container_name: openwakeword
+    depends_on:
+      - hass
+    restart: unless-stopped
+    ports:
+      - 10400:10400
+    command: --preload-model=ok_nabu
+    networks:
+      - hass
+#+end_src
+
 ** Grafana
 *** App
 #+begin_src yaml

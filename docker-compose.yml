@@ -372,6 +372,18 @@ services:
     networks:
       - hass
 
+  openwakeword:
+    image: rhasspy/wyoming-openwakeword
+    container_name: openwakeword
+    depends_on:
+      - hass
+    restart: unless-stopped
+    ports:
+      - 10400:10400
+    command: --preload-model=ok_nabu
+    networks:
+      - hass
+
   grafana:
     image: grafana/grafana-oss
     container_name: grafana
