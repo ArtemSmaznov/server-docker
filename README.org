@@ -294,7 +294,7 @@ Still needs work on opening the peer port
 *** App
 #+begin_src yaml
   nextcloud-app:
-    image: nextcloud:fpm-alpine
+    build: ./nextcloud/app
     container_name: nextcloud-app
     depends_on:
       - nextcloud-db
@@ -352,6 +352,7 @@ Still needs work on opening the peer port
     restart: unless-stopped
     volumes:
       - /bigdiskx/nextcloud/app:/var/www/html
+      - /bigdiskx/nextcloud/cron:/var/spool/cron/crontabs
     networks:
       - nextcloud
 #+end_src
@@ -604,8 +605,6 @@ Still needs work on opening the peer port
     depends_on:
       - webtrees-db
     restart: unless-stopped
-    ports:
-      - ${WEBTREES_LOCAL_PORT}:80
     volumes:
       - /bigdiskx/webtrees/data:/var/www/webtrees/data
       - /bigdiskx/webtrees/themes:/var/www/webtrees/modules_v4
