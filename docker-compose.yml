@@ -213,6 +213,22 @@ services:
       - transmission_password
     network_mode: service:wireguard
 
+  localai:
+    image: quay.io/go-skynet/local-ai:latest
+    container_name: localai
+    command: ["/usr/bin/local-ai" ]
+    restart: unless-stopped
+    tty: true
+    ports:
+      - ${LOCALAI_LOCAL_PORT}:8080
+    volumes:
+      - /bigdiskx/ai/localai/models:/models:cached
+      - /bigdiskx/ai/localai/images:/tmp/generated/images
+    env_file:
+      - secrets/localai.env
+    networks:
+      - nextcloud
+
   nextcloud-app:
     build: ./nextcloud/app
     container_name: nextcloud-app
