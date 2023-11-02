@@ -223,6 +223,8 @@ services:
     volumes:
       - /bigdiskx/nextcloud/app:/var/www/html
       - /bigdiskx/media/music:/media/music
+      - type: tmpfs
+        target: /tmp:exec
     environment:
       - MYSQL_HOST=nextcloud-db
       - REDIS_HOST=nextcloud-redis
