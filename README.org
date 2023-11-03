@@ -306,6 +306,8 @@ Still needs work on opening the peer port
       - type: tmpfs
         target: /tmp:exec
     environment:
+      - PUID=${UID}
+      - PGID=${UID}
       - MYSQL_HOST=nextcloud-db
       - REDIS_HOST=nextcloud-redis
       - MYSQL_DATABASE=${NEXTCLOUD_DB_NAME}
