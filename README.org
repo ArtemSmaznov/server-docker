@@ -323,7 +323,7 @@ Still needs work on opening the peer port
     restart: unless-stopped
     volumes:
       - /bigdiskx/nextcloud/app:/var/www/html
-      - /bigdiskx/media/music:/media/music
+      - /bigdiskx/media/music:/var/www/html/data/artem/files/music
       - type: tmpfs
         target: /tmp:exec
     environment:
