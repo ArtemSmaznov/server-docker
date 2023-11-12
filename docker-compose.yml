@@ -35,6 +35,7 @@ services:
   proxy:
     build: ./proxy
     container_name: reverse-proxy
+    tty: true # enable colorized logs
     restart: always
     ports:
       - 80:80
@@ -52,9 +53,10 @@ services:
   acme:
     image: nginxproxy/acme-companion
     container_name: acme
+    tty: true # enable colorized logs
+    restart: always
     depends_on:
       - proxy
-    restart: always
     volumes:
       - /bigdiskx/proxy/certs:/etc/nginx/certs
       - /bigdiskx/proxy/acme:/etc/acme.sh
@@ -70,6 +72,7 @@ services:
     image: pihole/pihole:latest
     container_name: pi-hole
     hostname: pi-hole
+    tty: true # enable colorized logs
     restart: always
     ports:
       - 53:53/tcp
@@ -111,6 +114,7 @@ services:
   home:
     image: linuxserver/heimdall:latest
     container_name: home
+    tty: true # enable colorized logs
     restart: unless-stopped
     volumes:
       - /bigdiskx/heimdall:/config
@@ -129,6 +133,7 @@ services:
   wireguard:
     image: linuxserver/wireguard:latest
     container_name: wireguard
+    tty: true # enable colorized logs
     restart: unless-stopped
     ports:
       - ${WIREGUARD_PORT}:${WIREGUARD_PORT}/udp
@@ -166,9 +171,10 @@ services:
   wireguard-ui:
     image: ngoduykhanh/wireguard-ui:latest
     container_name: wireguard-ui
+    tty: true # enable colorized logs
+    restart: unless-stopped
     depends_on:
       - wireguard
-    restart: unless-stopped
     cap_add:
       - NET_ADMIN
     volumes:
@@ -193,9 +199,10 @@ services:
   transmission:
     image: linuxserver/transmission:latest
     container_name: transmission
+    tty: true # enable colorized logs
+    restart: unless-stopped
     depends_on:
       - wireguard
-    restart: unless-stopped
     volumes:
       - /bigdiskx/transmission/config:/config
       - /bigdiskx/transmission/watch:/watch
@@ -216,10 +223,11 @@ services:
   nextcloud-app:
     build: ./nextcloud/app
     container_name: nextcloud-app
+    tty: true # enable colorized logs
+    restart: unless-stopped
     depends_on:
       - nextcloud-db
       - nextcloud-redis
-    restart: unless-stopped
     volumes:
       - /bigdiskx/nextcloud/app:/var/www/html
       - /bigdiskx/media/music:/var/www/html/data/artem/files/music
@@ -243,9 +251,10 @@ services:
     build: ./nextcloud/server
     container_name: nextcloud-server
     hostname: nextcloud
+    tty: true # enable colorized logs
+    restart: unless-stopped
     depends_on:
       - nextcloud-app
-    restart: unless-stopped
     ports:
       - ${NEXTCLOUD_LOCAL_PORT}:80
     volumes:
@@ -264,6 +273,7 @@ services:
     image: nextcloud:fpm-alpine
     entrypoint: /cron.sh
     container_name: nextcloud-cron
+    tty: true # enable colorized logs
     depends_on:
       - nextcloud-db
       - nextcloud-redis
@@ -277,6 +287,7 @@ services:
   nextcloud-db:
     image: mariadb
     container_name: nextcloud-db
+    tty: true # enable colorized logs
     restart: unless-stopped
     command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     volumes:
@@ -297,14 +308,16 @@ services:
   nextcloud-redis:
     image: redis:alpine
     container_name: nextcloud-redis
+    tty: true # enable colorized logs
     restart: unless-stopped
     networks:
       - nextcloud
 
   hass:
     image: ghcr.io/home-assistant/home-assistant:stable
-    privileged: true
     container_name: home-assistant
+    tty: true # enable colorized logs
+    privileged: true
     depends_on:
       - grafana-influxdb
     restart: unless-stopped
@@ -324,12 +337,12 @@ services:
 
   zwave-js-ui:
     image: zwavejs/zwave-js-ui:latest
-    tty: true
     container_name: zwave-js-ui
-    depends_on:
-      - hass
+    tty: true # enable colorized logs
     restart: unless-stopped
     stop_signal: SIGINT
+    depends_on:
+      - hass
     ports:
       - ${ZWAVE_JS_LOCAL_PORT}:3000 # port for Z-Wave JS websocket server
     volumes:
@@ -352,9 +365,10 @@ services:
   piper:
     image: rhasspy/wyoming-piper
     container_name: piper
+    tty: true # enable colorized logs
+    restart: unless-stopped
     depends_on:
       - hass
-    restart: unless-stopped
     ports:
       - 10200:10200
     volumes:
@@ -366,9 +380,10 @@ services:
   whisper:
     image: rhasspy/wyoming-whisper
     container_name: whisper
+    tty: true # enable colorized logs
+    restart: unless-stopped
     depends_on:
       - hass
-    restart: unless-stopped
     ports:
       - 10300:10300
     volumes:
@@ -380,9 +395,10 @@ services:
   openwakeword:
     image: rhasspy/wyoming-openwakeword
     container_name: openwakeword
+    tty: true # enable colorized logs
+    restart: unless-stopped
     depends_on:
       - hass
-    restart: unless-stopped
     ports:
       - 10400:10400
     command: --preload-model=ok_nabu
@@ -392,9 +408,10 @@ services:
   grafana:
     image: grafana/grafana-oss
     container_name: grafana
+    tty: true # enable colorized logs
+    restart: unless-stopped
     depends_on:
       - grafana-influxdb
-    restart: unless-stopped
     user: '${UID}'
     ports:
       - ${GRAFANA_LOCAL_PORT}:3000
@@ -407,6 +424,7 @@ services:
   grafana-influxdb:
     image: influxdb:latest
     container_name: grafana-influxdb
+    tty: true # enable colorized logs
     restart: unless-stopped
     ports:
       - ${INFLUXDB_LOCAL_PORT}:8086
@@ -420,6 +438,7 @@ services:
     image: plexinc/pms-docker
     container_name: plex-media-server
     hostname: plex-media-server
+    tty: true # enable colorized logs
     restart: unless-stopped
     ports:
       - ${PLEX_LOCAL_PORT}:32400/tcp
@@ -450,6 +469,7 @@ services:
   asf:
     image: justarchi/archisteamfarm
     container_name: asf
+    tty: true # enable colorized logs
     restart: unless-stopped
     volumes:
       - /bigdiskx/archi-steam-farm:/app/config
@@ -464,9 +484,10 @@ services:
   webtrees:
     image: nathanvaughn/webtrees
     container_name: webtrees
+    tty: true # enable colorized logs
+    restart: unless-stopped
     depends_on:
       - webtrees-db
-    restart: unless-stopped
     volumes:
       - /bigdiskx/webtrees/data:/var/www/webtrees/data
       - /bigdiskx/webtrees/themes:/var/www/webtrees/modules_v4
@@ -505,6 +526,7 @@ services:
   webtrees-db:
     image: mariadb
     container_name: webtrees-db
+    tty: true # enable colorized logs
     restart: unless-stopped
     command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     volumes:
