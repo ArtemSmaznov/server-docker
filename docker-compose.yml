@@ -140,9 +140,9 @@ services:
       # wireguard-ui
       - ${WIREGUARD_UI_LOCAL_PORT}:5000
       # transmission
-      - ${TRANSMISSION_WEBUI_PORT}:${TRANSMISSION_WEBUI_PORT}/tcp
-      - ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}
-      - ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}/udp
+      #- ${TRANSMISSION_WEBUI_PORT}:${TRANSMISSION_WEBUI_PORT}/tcp
+      #- ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}
+      #- ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}/udp
     sysctls:
       - net.ipv4.conf.all.src_valid_mark=1
       - net.ipv6.conf.all.disable_ipv6=1
@@ -153,10 +153,10 @@ services:
       - /bigdiskx/wireguard:/config
       - /lib/modules:/lib/modules
     environment:
-      - VIRTUAL_HOST=${TRANSMISSION_HOST}
-      - VIRTUAL_PORT=${TRANSMISSION_WEBUI_PORT}
-      - LETSENCRYPT_HOST=${TRANSMISSION_HOST}
-      - LETSENCRYPT_EMAIL=${MY_EMAIL}
+      #- VIRTUAL_HOST=${TRANSMISSION_HOST}
+      #- VIRTUAL_PORT=${TRANSMISSION_WEBUI_PORT}
+      #- LETSENCRYPT_HOST=${TRANSMISSION_HOST}
+      #- LETSENCRYPT_EMAIL=${MY_EMAIL}
       - PUID=${UID}
       - PGID=${GID}
       - TZ=${TIME_ZONE}
@@ -203,12 +203,20 @@ services:
     restart: unless-stopped
     depends_on:
       - wireguard
+    ports:
+      - ${TRANSMISSION_WEBUI_PORT}:${TRANSMISSION_WEBUI_PORT}/tcp
+      - ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}
+      - ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}/udp
     volumes:
       - /bigdiskx/transmission/config:/config
       - /bigdiskx/transmission/watch:/watch
       - /bigdiskx/transmission/downloads:/downloads
       - /bigdiskx/media:/downloads/media
     environment:
+      - VIRTUAL_HOST=${TRANSMISSION_HOST}
+      - VIRTUAL_PORT=${TRANSMISSION_WEBUI_PORT}
+      - LETSENCRYPT_HOST=${TRANSMISSION_HOST}
+      - LETSENCRYPT_EMAIL=${MY_EMAIL}
       - WEBUI_PORT=${TRANSMISSION_WEBUI_PORT}
       - PEERPORT=${TRANSMISSION_PEER_PORT}
       - USER=${MY_USERNAME}
@@ -218,7 +226,10 @@ services:
       - TZ=${TIME_ZONE}
     secrets:
       - transmission_password
-    network_mode: service:wireguard
+    networks:
+      - proxy-tier
+      - hass
+    #network_mode: service:wireguard
 
   nextcloud-app:
     build: ./nextcloud/app
