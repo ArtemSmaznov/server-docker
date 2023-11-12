@@ -213,7 +213,7 @@ services:
     ports:
       - ${WIREGUARD_PORT}:${WIREGUARD_PORT}/udp
       # wireguard-ui
-      #- ${WIREGUARD_UI_LOCAL_PORT}:5000
+      - ${WIREGUARD_UI_LOCAL_PORT}:5000
       # transmission
       #- ${TRANSMISSION_WEBUI_PORT}:${TRANSMISSION_WEBUI_PORT}/tcp
       #- ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}
@@ -249,8 +249,6 @@ services:
       - wireguard
     cap_add:
       - NET_ADMIN
-    ports:
-      - ${WIREGUARD_UI_LOCAL_PORT}:5000
     volumes:
       - /bigdiskx/wireguard-ui:/app/db
       - /bigdiskx/wireguard:/etc/wireguard
@@ -269,9 +267,7 @@ services:
       driver: json-file
       options:
         max-size: 50m
-    networks:
-      - vpn
-    #network_mode: service:wireguard
+    network_mode: service:wireguard
 #+end_src
 
 ** Transmission
