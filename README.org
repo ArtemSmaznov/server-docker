@@ -596,8 +596,8 @@ Still needs work on opening the peer port
       - hass
 #+end_src
 
-** TODO Anki
-#+begin_src yaml :tangle no
+** Anki
+#+begin_src yaml
   anki:
     image: kuklinistvan/anki-sync-server:latest
     container_name: anki

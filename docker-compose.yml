@@ -477,6 +477,21 @@ services:
       - proxy-tier
       - hass
 
+  anki:
+    image: kuklinistvan/anki-sync-server:latest
+    container_name: anki
+    tty: true # enable colorized logs
+    restart: unless-stopped
+    volumes:
+      - /bigdiskx/anki:/app/data
+    environment:
+      - VIRTUAL_HOST=${ANKI_HOST}
+      - VIRTUAL_PORT=27701
+      - LETSENCRYPT_HOST=${ANKI_HOST}
+      - LETSENCRYPT_EMAIL=${MY_EMAIL}
+    networks:
+      - proxy-tier
+
   asf:
     image: justarchi/archisteamfarm
     container_name: asf
