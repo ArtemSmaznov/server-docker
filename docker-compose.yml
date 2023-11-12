@@ -135,20 +135,20 @@ services:
     container_name: wireguard
     tty: true # enable colorized logs
     restart: unless-stopped
-    ports:
-      - ${WIREGUARD_PORT}:${WIREGUARD_PORT}/udp
-      # wireguard-ui
-      - ${WIREGUARD_UI_LOCAL_PORT}:5000
-      # transmission
-      #- ${TRANSMISSION_WEBUI_PORT}:${TRANSMISSION_WEBUI_PORT}/tcp
-      #- ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}
-      #- ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}/udp
     sysctls:
       - net.ipv4.conf.all.src_valid_mark=1
       - net.ipv6.conf.all.disable_ipv6=1
       - net.ipv6.conf.default.disable_ipv6=1
     cap_add:
       - NET_ADMIN
+    ports:
+      - ${WIREGUARD_PORT}:${WIREGUARD_PORT}/udp
+      # wireguard-ui
+      #- ${WIREGUARD_UI_LOCAL_PORT}:5000
+      # transmission
+      #- ${TRANSMISSION_WEBUI_PORT}:${TRANSMISSION_WEBUI_PORT}/tcp
+      #- ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}
+      #- ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}/udp
     volumes:
       - /bigdiskx/wireguard:/config
       - /lib/modules:/lib/modules
@@ -166,7 +166,7 @@ services:
     networks:
       - proxy-tier
       - hass
-      # - vpn
+      - vpn
 
   wireguard-ui:
     image: ngoduykhanh/wireguard-ui:latest
@@ -177,7 +177,10 @@ services:
       - wireguard
     cap_add:
       - NET_ADMIN
+    ports:
+      - ${WIREGUARD_UI_LOCAL_PORT}:5000
     volumes:
+      - /bigdiskx/wireguard-ui:/app/db
       - /bigdiskx/wireguard:/etc/wireguard
     environment:
       - SENDGRID_API_KEY
@@ -194,15 +197,17 @@ services:
       driver: json-file
       options:
         max-size: 50m
-    network_mode: service:wireguard
+    networks:
+      - vpn
+    #network_mode: service:wireguard
 
   transmission:
     image: linuxserver/transmission:latest
     container_name: transmission
     tty: true # enable colorized logs
     restart: unless-stopped
-    depends_on:
-      - wireguard
+    #depends_on:
+    #  - wireguard
     ports:
       - ${TRANSMISSION_WEBUI_PORT}:${TRANSMISSION_WEBUI_PORT}/tcp
       - ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}
@@ -229,6 +234,7 @@ services:
     networks:
       - proxy-tier
       - hass
+      - vpn
     #network_mode: service:wireguard
 
   nextcloud-app:
