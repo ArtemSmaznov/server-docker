@@ -12,6 +12,7 @@
 - [[#secrets][Secrets]]
 - [[#services][Services]]
   - [[#reverse-proxy][Reverse Proxy]]
+  - [[#dd-client][DD Client]]
   - [[#home][Home]]
   - [[#vpn][VPN]]
   - [[#transmission][Transmission]]
@@ -123,6 +124,22 @@ services:
       - DEFAULT_EMAIL=${MY_EMAIL}
     networks:
       - proxy-tier
+#+end_src
+
+** DD Client
+#+begin_src yaml
+  ddclient:
+    image: lscr.io/linuxserver/ddclient:latest
+    container_name: ddclient
+    hostname: ddclient
+    tty: true
+    restart: unless-stopped
+    volumes:
+      - /bigdiskx/dns:/config
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TIME_ZONE}
 #+end_src
 
 ** Home

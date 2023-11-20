@@ -66,6 +66,19 @@ services:
     networks:
       - proxy-tier
 
+  ddclient:
+    image: lscr.io/linuxserver/ddclient:latest
+    container_name: ddclient
+    hostname: ddclient
+    tty: true
+    restart: unless-stopped
+    volumes:
+      - /bigdiskx/dns:/config
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TIME_ZONE}
+
   home:
     image: linuxserver/heimdall:latest
     container_name: home
