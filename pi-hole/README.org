@@ -57,19 +57,6 @@ services:
     extra_hosts:
       # Resolve to nothing domains (terminate connection)
       - 'nw2master.bioware.com nwn2.master.gamespy.com:0.0.0.0'
-      # LAN hostnames for other docker containers using nginx-proxy
-      - ${HOST_24}
-      - ${HOST_25}
-      - ${HOST_26}
-      - ${HOST_27}
-      - ${HOST_28}
-      - ${HOST_29}
-      - ${HOST_30}
-      - ${HOST_31}
-      - ${HOST_32}
-      - ${HOST_33}
-      - ${HOST_40}
-      - ${HOST_41}
     secrets:
       - pihole_password
 #+end_src
