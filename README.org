@@ -95,9 +95,9 @@ services:
       - 80:80
       - 443:443
     volumes:
-      - /bigdiskx/proxy/certs:/etc/nginx/certs:ro
-      - /bigdiskx/proxy/vhost.d:/etc/nginx/vhost.d
-      - /bigdiskx/proxy/html:/usr/share/nginx/html
+      - /exosx20/proxy/certs:/etc/nginx/certs:ro
+      - /exosx20/proxy/vhost.d:/etc/nginx/vhost.d
+      - /exosx20/proxy/html:/usr/share/nginx/html
       - /var/run/docker.sock:/tmp/docker.sock:ro
     labels:
       com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: 'true'
@@ -115,10 +115,10 @@ services:
     depends_on:
       - proxy
     volumes:
-      - /bigdiskx/proxy/certs:/etc/nginx/certs
-      - /bigdiskx/proxy/acme:/etc/acme.sh
-      - /bigdiskx/proxy/vhost.d:/etc/nginx/vhost.d
-      - /bigdiskx/proxy/html:/usr/share/nginx/html
+      - /exosx20/proxy/certs:/etc/nginx/certs
+      - /exosx20/proxy/acme:/etc/acme.sh
+      - /exosx20/proxy/vhost.d:/etc/nginx/vhost.d
+      - /exosx20/proxy/html:/usr/share/nginx/html
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - DEFAULT_EMAIL=${MY_EMAIL}
@@ -135,7 +135,7 @@ services:
     tty: true
     restart: unless-stopped
     volumes:
-      - /bigdiskx/dns:/config
+      - /exosx20/dns:/config
     environment:
       - PUID=${UID}
       - PGID=${GID}
@@ -150,7 +150,7 @@ services:
     tty: true # enable colorized logs
     restart: unless-stopped
     volumes:
-      - /bigdiskx/heimdall:/config
+      - /exosx20/heimdall:/config
     environment:
       - VIRTUAL_HOST=${HOME_HOST}
       - VIRTUAL_PORT=443
@@ -187,7 +187,7 @@ services:
       #- ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}
       #- ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}/udp
     volumes:
-      - /bigdiskx/wireguard:/config
+      - /exosx20/wireguard:/config
       - /lib/modules:/lib/modules
     environment:
       #- VIRTUAL_HOST=${TRANSMISSION_HOST}
@@ -218,8 +218,8 @@ services:
     cap_add:
       - NET_ADMIN
     volumes:
-      - /bigdiskx/wireguard-ui:/app/db
-      - /bigdiskx/wireguard:/etc/wireguard
+      - /exosx20/wireguard-ui:/app/db
+      - /exosx20/wireguard:/etc/wireguard
     environment:
       - SENDGRID_API_KEY
       - EMAIL_FROM_ADDRESS
@@ -253,10 +253,10 @@ Still needs work on opening the peer port
       - ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}
       - ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}/udp
     volumes:
-      - /bigdiskx/transmission/config:/config
-      - /bigdiskx/transmission/watch:/watch
-      - /bigdiskx/transmission/downloads:/downloads
-      - /bigdiskx/media:/downloads/media
+      - /exosx20/transmission/config:/config
+      - /exosx20/transmission/watch:/watch
+      - /exosx20/transmission/downloads:/downloads
+      - /exosx20/media:/downloads/media
     environment:
       - VIRTUAL_HOST=${TRANSMISSION_HOST}
       - VIRTUAL_PORT=${TRANSMISSION_WEBUI_PORT}
@@ -290,8 +290,8 @@ Still needs work on opening the peer port
       - nextcloud-db
       - nextcloud-redis
     volumes:
-      - /bigdiskx/nextcloud/app:/var/www/html
-      - /bigdiskx/media/music:/var/www/html/data/artem/files/music
+      - /exosx20/nextcloud/app:/var/www/html
+      - /exosx20/media/music:/var/www/html/data/artem/files/music
       - type: tmpfs
         target: /tmp:exec
     environment:
@@ -322,7 +322,7 @@ Still needs work on opening the peer port
     ports:
       - ${NEXTCLOUD_LOCAL_PORT}:80
     volumes:
-      - /bigdiskx/nextcloud/app:/var/www/html:ro
+      - /exosx20/nextcloud/app:/var/www/html:ro
     environment:
       - VIRTUAL_HOST=${NEXTCLOUD_HOST}
       - VIRTUAL_PORT=80
@@ -346,8 +346,8 @@ Still needs work on opening the peer port
       - nextcloud-redis
     restart: unless-stopped
     volumes:
-      - /bigdiskx/nextcloud/app:/var/www/html
-      - /bigdiskx/nextcloud/cron:/var/spool/cron/crontabs
+      - /exosx20/nextcloud/app:/var/www/html
+      - /exosx20/nextcloud/cron:/var/spool/cron/crontabs
     networks:
       - nextcloud
 #+end_src
@@ -361,7 +361,7 @@ Still needs work on opening the peer port
     restart: unless-stopped
     command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     volumes:
-      - /bigdiskx/nextcloud/db:/var/lib/mysql
+      - /exosx20/nextcloud/db:/var/lib/mysql
     environment:
       - MARIADB_AUTO_UPGRADE=1
       - MARIADB_DISABLE_UPGRADE_BACKUP=1
@@ -401,7 +401,7 @@ Still needs work on opening the peer port
     ports:
       - ${HOME_ASSISTANT_LOCAL_PORT}:8123
     volumes:
-      - /bigdiskx/home-assistant/config:/config
+      - /exosx20/home-assistant/config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
       - VIRTUAL_HOST=${HOME_ASSISTANT_HOST}
@@ -426,7 +426,7 @@ Still needs work on opening the peer port
     ports:
       - ${ZWAVE_JS_LOCAL_PORT}:3000 # port for Z-Wave JS websocket server
     volumes:
-      - /bigdiskx/home-assistant/zwave:/usr/src/app/store
+      - /exosx20/home-assistant/zwave:/usr/src/app/store
     devices:
       - /dev/serial/by-id/usb-0658_0200-if00:/dev/zwave
     environment:
@@ -455,7 +455,7 @@ Still needs work on opening the peer port
     ports:
       - 10200:10200
     volumes:
-      - /bigdiskx/home-assistant/wyoming-piper:/data
+      - /exosx20/home-assistant/wyoming-piper:/data
     command: --voice=en_US-lessac-medium
     networks:
       - hass
@@ -473,7 +473,7 @@ Still needs work on opening the peer port
     ports:
       - 10300:10300
     volumes:
-      - /bigdiskx/home-assistant/wyoming-whisper:/data
+      - /exosx20/home-assistant/wyoming-whisper:/data
     command: --model=small --language=en
     networks:
       - hass
@@ -509,7 +509,7 @@ Still needs work on opening the peer port
     ports:
       - ${GRAFANA_LOCAL_PORT}:3000
     volumes:
-      - /bigdiskx/grafana/app:/var/lib/grafana
+      - /exosx20/grafana/app:/var/lib/grafana
     networks:
       - grafana
       - hass
@@ -525,7 +525,7 @@ Still needs work on opening the peer port
     ports:
       - ${INFLUXDB_LOCAL_PORT}:8086
     volumes:
-      - /bigdiskx/grafana/influxdb:/var/lib/influxdb2
+      - /exosx20/grafana/influxdb:/var/lib/influxdb2
     networks:
       - grafana
       - hass
@@ -549,9 +549,9 @@ Still needs work on opening the peer port
       - 32413:32413/udp
       - 32414:32414/udp
     volumes:
-      - /bigdiskx/plex/config:/config
-      - /bigdiskx/plex/transcode:/transcode
-      - /bigdiskx/media:/data
+      - /exosx20/plex/config:/config
+      - /exosx20/plex/transcode:/transcode
+      - /exosx20/media:/data
     environment:
       - VIRTUAL_HOST=${PLEX_HOST}
       - VIRTUAL_PORT=32400
@@ -574,7 +574,7 @@ Still needs work on opening the peer port
     tty: true # enable colorized logs
     restart: unless-stopped
     volumes:
-      - /bigdiskx/anki:/app/data
+      - /exosx20/anki:/app/data
     environment:
       - VIRTUAL_HOST=${ANKI_HOST}
       - VIRTUAL_PORT=27701
@@ -592,7 +592,7 @@ Still needs work on opening the peer port
     tty: true # enable colorized logs
     restart: unless-stopped
     volumes:
-      - /bigdiskx/archi-steam-farm:/app/config
+      - /exosx20/archi-steam-farm:/app/config
     environment:
       - VIRTUAL_HOST=${ASF_HOST}
       - VIRTUAL_PORT=1242
@@ -613,8 +613,8 @@ Still needs work on opening the peer port
     depends_on:
       - webtrees-db
     volumes:
-      - /bigdiskx/webtrees/data:/var/www/webtrees/data
-      - /bigdiskx/webtrees/themes:/var/www/webtrees/modules_v4
+      - /exosx20/webtrees/data:/var/www/webtrees/data
+      - /exosx20/webtrees/themes:/var/www/webtrees/modules_v4
     environment:
       # proxy
       VIRTUAL_HOST: ${WEBTREES_HOST}
@@ -657,7 +657,7 @@ Still needs work on opening the peer port
     restart: unless-stopped
     command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     volumes:
-      - /bigdiskx/webtrees/db:/var/lib/mysql
+      - /exosx20/webtrees/db:/var/lib/mysql
     environment:
       - MARIADB_AUTO_UPGRADE=1
       - MARIADB_DISABLE_UPGRADE_BACKUP=1
