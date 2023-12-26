@@ -14,7 +14,8 @@
   - [[#reverse-proxy][Reverse Proxy]]
   - [[#dd-client][DD Client]]
   - [[#home][Home]]
-  - [[#vpn][VPN]]
+  - [[#hold-vpn][HOLD VPN]]
+  - [[#kill-transmission][KILL Transmission]]
   - [[#transmission][Transmission]]
   - [[#nextcloud][Nextcloud]]
   - [[#home-assistant][Home Assistant]]
@@ -77,6 +78,10 @@ secrets:
     file: secrets/webtrees/db_root_password
   transmission_password:
     file: secrets/transmission_password
+  openvpn_creds:
+    file: secrets/vpn_creds
+  rpc_creds:
+    file: secrets/transmission_creds
 #+end_src
 
 * Services
@@ -164,9 +169,9 @@ services:
       - proxy-tier
 #+end_src
 
-** VPN
+** HOLD VPN
 *** WireGuard
-#+begin_src yaml
+#+begin_src yaml :tangle no
   wireguard:
     image: linuxserver/wireguard:latest
     container_name: wireguard
@@ -207,7 +212,7 @@ services:
 #+end_src
 
 *** WireGuard UI
-#+begin_src yaml
+#+begin_src yaml :tangle no
   wireguard-ui:
     image: ngoduykhanh/wireguard-ui:latest
     container_name: wireguard-ui
@@ -238,9 +243,9 @@ services:
     network_mode: service:wireguard
 #+end_src
 
-** Transmission
+** KILL Transmission
 Still needs work on opening the peer port
-#+begin_src yaml
+#+begin_src yaml :tangle no
   transmission:
     image: linuxserver/transmission:latest
     container_name: transmission
@@ -276,6 +281,47 @@ Still needs work on opening the peer port
       - hass
       - vpn
     #network_mode: service:wireguard
+#+end_src
+
+** Transmission
+https://haugene.github.io/docker-transmission-openvpn/
+#+begin_src yaml
+  transmission:
+    image: haugene/transmission-openvpn
+    container_name: transmission
+    tty: true # enable colorized logs
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - ${TRANSMISSION_WEBUI_PORT}:9091/tcp
+    volumes:
+      - /exosx20/transmission/config:/config/transmission-home
+      - /exosx20/transmission/watch:/watch
+      - /exosx20/transmission/downloads:/downloads
+      - /exosx20/media:/downloads/media
+    environment:
+      - VIRTUAL_HOST=${TRANSMISSION_HOST}
+      - VIRTUAL_PORT=${TRANSMISSION_WEBUI_PORT}
+      - LETSENCRYPT_HOST=${TRANSMISSION_HOST}
+      - LETSENCRYPT_EMAIL=${MY_EMAIL}
+      - LOCAL_NETWORK=192.168.0.0/16
+      #- LOCAL_NETWORK=172.10.0.0/24
+      - TRANSMISSION_DOWNLOAD_DIR=/downloads
+      - TRANSMISSION_INCOMPLETE_DIR=/downloads/incomplete
+      - TRANSMISSION_RPC_PORT=${TRANSMISSION_WEBUI_PORT}
+      - PUID=${UID}
+      - PGID=${GID}
+      - TZ=${TIME_ZONE}
+      - HEALTH_CHECK_HOST=archlinux.org
+    env_file:
+      - secrets/vpn.env
+    secrets:
+      - rpc_creds
+      - openvpn_creds
+    networks:
+      - proxy-tier
+      - hass
 #+end_src
 
 ** Nextcloud

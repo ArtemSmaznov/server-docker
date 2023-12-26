@@ -27,6 +27,10 @@ secrets:
     file: secrets/webtrees/db_root_password
   transmission_password:
     file: secrets/transmission_password
+  openvpn_creds:
+    file: secrets/vpn_creds
+  rpc_creds:
+    file: secrets/transmission_creds
 
 services:
 
@@ -98,86 +102,17 @@ services:
     networks:
       - proxy-tier
 
-  wireguard:
-    image: linuxserver/wireguard:latest
-    container_name: wireguard
-    tty: true # enable colorized logs
-    restart: unless-stopped
-    sysctls:
-      - net.ipv4.conf.all.src_valid_mark=1
-      - net.ipv6.conf.all.disable_ipv6=1
-      - net.ipv6.conf.default.disable_ipv6=1
-    cap_add:
-      - NET_ADMIN
-    ports:
-      - ${WIREGUARD_PORT}:${WIREGUARD_PORT}/udp
-      # wireguard-ui
-      - ${WIREGUARD_UI_LOCAL_PORT}:5000
-      # transmission
-      #- ${TRANSMISSION_WEBUI_PORT}:${TRANSMISSION_WEBUI_PORT}/tcp
-      #- ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}
-      #- ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}/udp
-    volumes:
-      - /exosx20/wireguard:/config
-      - /lib/modules:/lib/modules
-    environment:
-      #- VIRTUAL_HOST=${TRANSMISSION_HOST}
-      #- VIRTUAL_PORT=${TRANSMISSION_WEBUI_PORT}
-      #- LETSENCRYPT_HOST=${TRANSMISSION_HOST}
-      #- LETSENCRYPT_EMAIL=${MY_EMAIL}
-      - PUID=${UID}
-      - PGID=${GID}
-      - TZ=${TIME_ZONE}
-      - SERVERPORT=${WIREGUARD_PORT}
-      # - INTERNAL_SUBNET=10.13.13.0 #optional
-      - ALLOWEDIPS=0.0.0.0/0 #optional
-    networks:
-      - proxy-tier
-      - hass
-      - vpn
-
-  wireguard-ui:
-    image: ngoduykhanh/wireguard-ui:latest
-    container_name: wireguard-ui
-    tty: true # enable colorized logs
-    restart: unless-stopped
-    depends_on:
-      - wireguard
-    cap_add:
-      - NET_ADMIN
-    volumes:
-      - /exosx20/wireguard-ui:/app/db
-      - /exosx20/wireguard:/etc/wireguard
-    environment:
-      - SENDGRID_API_KEY
-      - EMAIL_FROM_ADDRESS
-      - EMAIL_FROM_NAME
-      - SESSION_SECRET
-      - WGUI_USERNAME=${MY_USERNAME}
-      - WG_CONF_TEMPLATE
-      - WGUI_MANAGE_START=true
-      - WGUI_MANAGE_RESTART=true
-    env_file:
-      - secrets/wireguard-ui.env
-    logging:
-      driver: json-file
-      options:
-        max-size: 50m
-    network_mode: service:wireguard
-
   transmission:
-    image: linuxserver/transmission:latest
+    image: haugene/transmission-openvpn
     container_name: transmission
     tty: true # enable colorized logs
     restart: unless-stopped
-    #depends_on:
-    #  - wireguard
+    cap_add:
+      - NET_ADMIN
     ports:
-      - ${TRANSMISSION_WEBUI_PORT}:${TRANSMISSION_WEBUI_PORT}/tcp
-      - ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}
-      - ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}/udp
+      - ${TRANSMISSION_WEBUI_PORT}:9091/tcp
     volumes:
-      - /exosx20/transmission/config:/config
+      - /exosx20/transmission/config:/config/transmission-home
       - /exosx20/transmission/watch:/watch
       - /exosx20/transmission/downloads:/downloads
       - /exosx20/media:/downloads/media
@@ -186,20 +121,23 @@ services:
       - VIRTUAL_PORT=${TRANSMISSION_WEBUI_PORT}
       - LETSENCRYPT_HOST=${TRANSMISSION_HOST}
       - LETSENCRYPT_EMAIL=${MY_EMAIL}
-      - WEBUI_PORT=${TRANSMISSION_WEBUI_PORT}
-      - PEERPORT=${TRANSMISSION_PEER_PORT}
-      - USER=${MY_USERNAME}
-      - FILE__PASS=/run/secrets/transmission_password
+      - LOCAL_NETWORK=192.168.0.0/16
+      #- LOCAL_NETWORK=172.10.0.0/24
+      - TRANSMISSION_DOWNLOAD_DIR=/downloads
+      - TRANSMISSION_INCOMPLETE_DIR=/downloads/incomplete
+      - TRANSMISSION_RPC_PORT=${TRANSMISSION_WEBUI_PORT}
       - PUID=${UID}
       - PGID=${GID}
       - TZ=${TIME_ZONE}
+      - HEALTH_CHECK_HOST=archlinux.org
+    env_file:
+      - secrets/vpn.env
     secrets:
-      - transmission_password
+      - rpc_creds
+      - openvpn_creds
     networks:
       - proxy-tier
       - hass
-      - vpn
-    #network_mode: service:wireguard
 
   nextcloud-app:
     build: ./nextcloud/app
