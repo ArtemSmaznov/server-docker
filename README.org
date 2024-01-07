@@ -24,6 +24,7 @@
   - [[#anki][Anki]]
   - [[#archi-steam-farm][Archi Steam Farm]]
   - [[#web-trees][Web Trees]]
+  - [[#digikam-db][DigiKam DB]]
 
 * Usage
 Bring server up
@@ -82,6 +83,10 @@ secrets:
     file: secrets/vpn_creds
   rpc_creds:
     file: secrets/transmission_creds
+  digikam_db_password:
+    file: secrets/digikam/db_password
+  digikam_db_root_password:
+    file: secrets/digikam/db_root_password
 #+end_src
 
 * Services
@@ -718,3 +723,24 @@ https://haugene.github.io/docker-transmission-openvpn/
       - webtrees
 #+end_src
 
+** DigiKam DB
+#+begin_src yaml
+  digikam-db:
+    image: mariadb
+    container_name: digikam-db
+    tty: true # enable colorized logs
+    restart: unless-stopped
+    ports:
+      - ${DIGIKAM_PORT}:3306
+    command: --max_allowed_packet=128M --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
+    volumes:
+      - /exosx20/digikam/db:/var/lib/mysql
+    environment:
+      - MARIADB_DATABASE=${DIGIKAM_DB_NAME}
+      - MARIADB_USER=${DIGIKAM_DB_USER}
+      - MARIADB_PASSWORD_FILE=/run/secrets/digikam_db_password
+      - MARIADB_ROOT_PASSWORD_FILE=/run/secrets/digikam_db_root_password
+    secrets:
+      - digikam_db_password
+      - digikam_db_root_password
+#+end_src
