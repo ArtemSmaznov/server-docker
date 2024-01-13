@@ -628,11 +628,16 @@ https://haugene.github.io/docker-transmission-openvpn/
     tty: true # enable colorized logs
     restart: unless-stopped
     ports:
-      - 8096:8096/tcp
+      - ${JELLYFIN_LOCAL_PORT}:8096/tcp
     volumes:
       - /exosx20/jellyfin/config:/config
       - /exosx20/jellyfin/cache:/cache
       - /exosx20/media:/media:ro
+    environment:
+      - VIRTUAL_HOST=${JELLYFIN_HOST}
+      - VIRTUAL_PORT=8096
+      - LETSENCRYPT_HOST=${JELLYFIN_HOST}
+      - LETSENCRYPT_EMAIL=${MY_EMAIL}
     networks:
       - proxy-tier
       - hass
