@@ -21,6 +21,7 @@
   - [[#home-assistant][Home Assistant]]
   - [[#grafana][Grafana]]
   - [[#plex][Plex]]
+  - [[#jellyfin][Jellyfin]]
   - [[#anki][Anki]]
   - [[#archi-steam-farm][Archi Steam Farm]]
   - [[#web-trees][Web Trees]]
@@ -612,6 +613,26 @@ https://haugene.github.io/docker-transmission-openvpn/
       - PLEX_UID=${UID}
       - PLEX_GID=${GID}
       - TZ=${TIME_ZONE}
+    networks:
+      - proxy-tier
+      - hass
+#+end_src
+
+** Jellyfin
+#+begin_src yaml
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    hostname: jellyfin
+    user: ${UID}:${GID}
+    tty: true # enable colorized logs
+    restart: unless-stopped
+    ports:
+      - 8096:8096/tcp
+    volumes:
+      - /exosx20/jellyfin/config:/config
+      - /exosx20/jellyfin/cache:/cache
+      - /exosx20/media:/media:ro
     networks:
       - proxy-tier
       - hass

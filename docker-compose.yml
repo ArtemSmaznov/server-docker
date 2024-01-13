@@ -389,6 +389,23 @@ services:
       - proxy-tier
       - hass
 
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    hostname: jellyfin
+    user: ${UID}:${GID}
+    tty: true # enable colorized logs
+    restart: unless-stopped
+    ports:
+      - 8096:8096/tcp
+    volumes:
+      - /exosx20/jellyfin/config:/config
+      - /exosx20/jellyfin/cache:/cache
+      - /exosx20/media:/media:ro
+    networks:
+      - proxy-tier
+      - hass
+
   anki:
     image: kuklinistvan/anki-sync-server:latest
     container_name: anki
