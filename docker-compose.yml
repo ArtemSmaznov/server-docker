@@ -47,9 +47,9 @@ services:
       - 80:80
       - 443:443
     volumes:
-      - /exosx20/proxy/certs:/etc/nginx/certs:ro
-      - /exosx20/proxy/vhost.d:/etc/nginx/vhost.d
-      - /exosx20/proxy/html:/usr/share/nginx/html
+      - /home/docker/proxy/certs:/etc/nginx/certs:ro
+      - /home/docker/proxy/vhost.d:/etc/nginx/vhost.d
+      - /home/docker/proxy/html:/usr/share/nginx/html
       - /var/run/docker.sock:/tmp/docker.sock:ro
     labels:
       com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: 'true'
@@ -64,10 +64,10 @@ services:
     depends_on:
       - proxy
     volumes:
-      - /exosx20/proxy/certs:/etc/nginx/certs
-      - /exosx20/proxy/acme:/etc/acme.sh
-      - /exosx20/proxy/vhost.d:/etc/nginx/vhost.d
-      - /exosx20/proxy/html:/usr/share/nginx/html
+      - /home/docker/proxy/certs:/etc/nginx/certs
+      - /home/docker/proxy/acme:/etc/acme.sh
+      - /home/docker/proxy/vhost.d:/etc/nginx/vhost.d
+      - /home/docker/proxy/html:/usr/share/nginx/html
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - DEFAULT_EMAIL=${MY_EMAIL}
@@ -81,7 +81,7 @@ services:
     tty: true
     restart: unless-stopped
     volumes:
-      - /exosx20/dns:/config
+      - /home/docker/dns:/config
     environment:
       - PUID=${UID}
       - PGID=${GID}
@@ -93,7 +93,7 @@ services:
     tty: true # enable colorized logs
     restart: unless-stopped
     volumes:
-      - /exosx20/heimdall:/config
+      - /home/docker/heimdall:/config
     environment:
       - VIRTUAL_HOST=${HOME_HOST}
       - VIRTUAL_PORT=443
@@ -116,9 +116,9 @@ services:
     ports:
       - ${TRANSMISSION_WEBUI_PORT}:9091/tcp
     volumes:
-      - /exosx20/transmission/config:/config/transmission-home
-      - /exosx20/transmission/watch:/watch
-      - /exosx20/transmission/downloads:/downloads
+      - /home/docker/transmission/config:/config/transmission-home
+      - /home/docker/transmission/watch:/watch
+      - /home/docker/transmission/downloads:/downloads
       - /exosx20/media:/downloads/media
     environment:
       - VIRTUAL_HOST=${TRANSMISSION_HOST}
@@ -152,7 +152,7 @@ services:
       - nextcloud-db
       - nextcloud-redis
     volumes:
-      - /exosx20/nextcloud/app:/var/www/html
+      - /home/docker/nextcloud/app:/var/www/html
       - /exosx20/media/music:/var/www/html/data/artem/files/music
       - type: tmpfs
         target: /tmp:exec
@@ -181,7 +181,7 @@ services:
     ports:
       - ${NEXTCLOUD_LOCAL_PORT}:80
     volumes:
-      - /exosx20/nextcloud/app:/var/www/html:ro
+      - /home/docker/nextcloud/app:/var/www/html:ro
     environment:
       - VIRTUAL_HOST=${NEXTCLOUD_HOST}
       - VIRTUAL_PORT=80
@@ -202,8 +202,8 @@ services:
       - nextcloud-redis
     restart: unless-stopped
     volumes:
-      - /exosx20/nextcloud/app:/var/www/html
-      - /exosx20/nextcloud/cron:/var/spool/cron/crontabs
+      - /home/docker/nextcloud/app:/var/www/html
+      - /home/docker/nextcloud/cron:/var/spool/cron/crontabs
     networks:
       - nextcloud
 
@@ -214,7 +214,7 @@ services:
     restart: unless-stopped
     command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     volumes:
-      - /exosx20/nextcloud/db:/var/lib/mysql
+      - /home/docker/nextcloud/db:/var/lib/mysql
     environment:
       - MARIADB_AUTO_UPGRADE=1
       - MARIADB_DISABLE_UPGRADE_BACKUP=1
@@ -247,7 +247,7 @@ services:
     ports:
       - ${HOME_ASSISTANT_LOCAL_PORT}:8123
     volumes:
-      - /exosx20/home-assistant/config:/config
+      - /home/docker/home-assistant/config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
       - VIRTUAL_HOST=${HOME_ASSISTANT_HOST}
@@ -269,7 +269,7 @@ services:
     ports:
       - ${ZWAVE_JS_LOCAL_PORT}:3000 # port for Z-Wave JS websocket server
     volumes:
-      - /exosx20/home-assistant/zwave:/usr/src/app/store
+      - /home/docker/home-assistant/zwave:/usr/src/app/store
     devices:
       - /dev/serial/by-id/usb-0658_0200-if00:/dev/zwave
     environment:
@@ -295,7 +295,7 @@ services:
     ports:
       - 10200:10200
     volumes:
-      - /exosx20/home-assistant/wyoming-piper:/data
+      - /home/docker/home-assistant/wyoming-piper:/data
     command: --voice=en_US-lessac-medium
     networks:
       - hass
@@ -310,7 +310,7 @@ services:
     ports:
       - 10300:10300
     volumes:
-      - /exosx20/home-assistant/wyoming-whisper:/data
+      - /home/docker/home-assistant/wyoming-whisper:/data
     command: --model=small --language=en
     networks:
       - hass
@@ -339,7 +339,7 @@ services:
     ports:
       - ${GRAFANA_LOCAL_PORT}:3000
     volumes:
-      - /exosx20/grafana/app:/var/lib/grafana
+      - /home/docker/grafana/app:/var/lib/grafana
     networks:
       - grafana
       - hass
@@ -352,7 +352,7 @@ services:
     ports:
       - ${INFLUXDB_LOCAL_PORT}:8086
     volumes:
-      - /exosx20/grafana/influxdb:/var/lib/influxdb2
+      - /home/docker/grafana/influxdb:/var/lib/influxdb2
     networks:
       - grafana
       - hass
@@ -373,8 +373,8 @@ services:
       - 32413:32413/udp
       - 32414:32414/udp
     volumes:
-      - /exosx20/plex/config:/config
-      - /exosx20/plex/transcode:/transcode
+      - /home/docker/plex/config:/config
+      - /home/docker/plex/transcode:/transcode
       - /exosx20/media:/data
     environment:
       - VIRTUAL_HOST=${PLEX_HOST}
@@ -399,9 +399,9 @@ services:
     ports:
       - ${JELLYFIN_LOCAL_PORT}:8096/tcp
     volumes:
-      - /exosx20/jellyfin/config:/config
-      - /exosx20/jellyfin/cache:/cache
-      - /exosx20/media:/media:ro
+      - /home/docker/jellyfin/config:/config
+      - /home/docker/jellyfin/cache:/cache
+      - /home/media:/media:ro
     environment:
       - VIRTUAL_HOST=${JELLYFIN_HOST}
       - VIRTUAL_PORT=8096
@@ -417,7 +417,7 @@ services:
     tty: true # enable colorized logs
     restart: unless-stopped
     volumes:
-      - /exosx20/anki:/app/data
+      - /home/docker/anki:/app/data
     environment:
       - VIRTUAL_HOST=${ANKI_HOST}
       - VIRTUAL_PORT=27701
@@ -432,7 +432,7 @@ services:
     tty: true # enable colorized logs
     restart: unless-stopped
     volumes:
-      - /exosx20/archi-steam-farm:/app/config
+      - /home/docker/archi-steam-farm:/app/config
     environment:
       - VIRTUAL_HOST=${ASF_HOST}
       - VIRTUAL_PORT=1242
@@ -449,8 +449,8 @@ services:
     depends_on:
       - webtrees-db
     volumes:
-      - /exosx20/webtrees/data:/var/www/webtrees/data
-      - /exosx20/webtrees/themes:/var/www/webtrees/modules_v4
+      - /home/docker/webtrees/data:/var/www/webtrees/data
+      - /home/docker/webtrees/themes:/var/www/webtrees/modules_v4
     environment:
       # proxy
       VIRTUAL_HOST: ${WEBTREES_HOST}
@@ -490,7 +490,7 @@ services:
     restart: unless-stopped
     command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     volumes:
-      - /exosx20/webtrees/db:/var/lib/mysql
+      - /home/docker/webtrees/db:/var/lib/mysql
     environment:
       - MARIADB_AUTO_UPGRADE=1
       - MARIADB_DISABLE_UPGRADE_BACKUP=1
@@ -513,7 +513,7 @@ services:
       - ${DIGIKAM_PORT}:3306
     command: --max_allowed_packet=128M --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     volumes:
-      - /exosx20/digikam/db:/var/lib/mysql
+      - /home/docker/digikam/db:/var/lib/mysql
     environment:
       - MARIADB_DATABASE=${DIGIKAM_DB_NAME}
       - MARIADB_USER=${DIGIKAM_DB_USER}
