@@ -119,7 +119,7 @@ services:
       - /home/docker/transmission/config:/config/transmission-home
       - /home/docker/transmission/watch:/watch
       - /home/docker/transmission/downloads:/downloads
-      - /exosx20/media:/downloads/media
+      - /exosx20/media/videos:/downloads/videos
     environment:
       - VIRTUAL_HOST=${TRANSMISSION_HOST}
       - VIRTUAL_PORT=${TRANSMISSION_WEBUI_PORT}
@@ -154,6 +154,8 @@ services:
     volumes:
       - /home/docker/nextcloud/app:/var/www/html
       - /exosx20/media/music:/var/www/html/data/artem/files/music
+      - /exosx20/media/pictures:/var/www/html/data/artem/files/pictures
+      - /exosx20/media/pictures/photos:/var/www/html/data/artem/files/Photos
       - type: tmpfs
         target: /tmp:exec
     environment:
@@ -375,7 +377,7 @@ services:
     volumes:
       - /home/docker/plex/config:/config
       - /home/docker/plex/transcode:/transcode
-      - /exosx20/media:/data
+      - /exosx20/media/videos:/data/videos
     environment:
       - VIRTUAL_HOST=${PLEX_HOST}
       - VIRTUAL_PORT=32400

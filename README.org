@@ -267,7 +267,7 @@ Still needs work on opening the peer port
       - /home/docker/transmission/config:/config
       - /home/docker/transmission/watch:/watch
       - /home/docker/transmission/downloads:/downloads
-      - /exosx20/media:/downloads/media
+      - /exosx20/media/videos:/downloads/videos
     environment:
       - VIRTUAL_HOST=${TRANSMISSION_HOST}
       - VIRTUAL_PORT=${TRANSMISSION_WEBUI_PORT}
@@ -305,7 +305,7 @@ https://haugene.github.io/docker-transmission-openvpn/
       - /home/docker/transmission/config:/config/transmission-home
       - /home/docker/transmission/watch:/watch
       - /home/docker/transmission/downloads:/downloads
-      - /exosx20/media:/downloads/media
+      - /exosx20/media/videos:/downloads/videos
     environment:
       - VIRTUAL_HOST=${TRANSMISSION_HOST}
       - VIRTUAL_PORT=${TRANSMISSION_WEBUI_PORT}
@@ -344,6 +344,8 @@ https://haugene.github.io/docker-transmission-openvpn/
     volumes:
       - /home/docker/nextcloud/app:/var/www/html
       - /exosx20/media/music:/var/www/html/data/artem/files/music
+      - /exosx20/media/pictures:/var/www/html/data/artem/files/pictures
+      - /exosx20/media/pictures/photos:/var/www/html/data/artem/files/Photos
       - type: tmpfs
         target: /tmp:exec
     environment:
@@ -603,7 +605,7 @@ https://haugene.github.io/docker-transmission-openvpn/
     volumes:
       - /home/docker/plex/config:/config
       - /home/docker/plex/transcode:/transcode
-      - /exosx20/media:/data
+      - /exosx20/media/videos:/data/videos
     environment:
       - VIRTUAL_HOST=${PLEX_HOST}
       - VIRTUAL_PORT=32400
@@ -632,7 +634,7 @@ https://haugene.github.io/docker-transmission-openvpn/
     volumes:
       - /home/docker/jellyfin/config:/config
       - /home/docker/jellyfin/cache:/cache
-      - /exosx20/media:/media:ro
+      - /exosx20/media/videos:/media/videos:ro
     environment:
       - VIRTUAL_HOST=${JELLYFIN_HOST}
       - VIRTUAL_PORT=8096
