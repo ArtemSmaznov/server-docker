@@ -117,8 +117,8 @@ services:
       - ${TRANSMISSION_WEBUI_PORT}:9091/tcp
     volumes:
       - /home/docker/transmission/config:/config/transmission-home
-      - /home/docker/transmission/watch:/watch
-      - /home/docker/transmission/downloads:/downloads
+      - /exosx20/downloads/:/downloads
+      - /exosx20/downloads/watch:/watch
       - /exosx20/media/videos:/downloads/videos
     environment:
       - VIRTUAL_HOST=${TRANSMISSION_HOST}
