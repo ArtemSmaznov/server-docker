@@ -10,6 +10,7 @@
 - [[#version][Version]]
 - [[#networks][Networks]]
 - [[#secrets][Secrets]]
+- [[#volumes][Volumes]]
 - [[#services][Services]]
   - [[#reverse-proxy][Reverse Proxy]]
   - [[#dd-client][DD Client]]
@@ -20,6 +21,7 @@
   - [[#nextcloud][Nextcloud]]
   - [[#home-assistant][Home Assistant]]
   - [[#grafana][Grafana]]
+  - [[#immich][Immich]]
   - [[#plex][Plex]]
   - [[#jellyfin][Jellyfin]]
   - [[#anki][Anki]]
@@ -60,6 +62,7 @@ networks:
       config:
         - subnet: 172.11.0.0/24
   nextcloud:
+  immich:
   vpn:
   grafana:
   webtrees:
@@ -72,6 +75,8 @@ secrets:
     file: secrets/db_password
   db_root_password:
     file: secrets/db_root_password
+  immich_db_password:
+    file: secrets/immich/db_password
   webtrees_password:
     file: secrets/webtrees/password
   webtrees_db_password:
@@ -88,6 +93,12 @@ secrets:
     file: secrets/digikam/db_password
   digikam_db_root_password:
     file: secrets/digikam/db_root_password
+#+end_src
+
+* Volumes
+#+begin_src yaml
+volumes:
+  model-cache:
 #+end_src
 
 * Services
@@ -582,6 +593,125 @@ https://haugene.github.io/docker-transmission-openvpn/
     networks:
       - grafana
       - hass
+#+end_src
+
+** Immich
+*** App
+#+begin_src yaml
+  immich:
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    container_name: immich
+    hostname: immich
+    tty: true # enable colorized logs
+    depends_on:
+      - immich-db
+      - immich-redis
+    restart: unless-stopped
+    command: ['start.sh', 'immich']
+    ports:
+      - ${IMMICH_LOCAL_PORT}:3001
+    volumes:
+      - /exosx20/media/photos.test:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      DB_DATABASE_NAME: ${IMMICH_DB_NAME}
+      DB_USERNAME: ${IMMICH_DB_USER}
+      DB_PASSWORD: /run/secrets/immich_db_password
+      DB_HOSTNAME: immich-db
+      REDIS_HOSTNAME: immich-redis
+    secrets:
+      - immich_db_password
+    networks:
+      - proxy-tier
+      - immich
+#+end_src
+
+*** Micro-services
+#+begin_src yaml
+  immich-microservices:
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    container_name: immich-microservices
+    tty: true # enable colorized logs
+    depends_on:
+      - immich-db
+      - immich-redis
+    restart: unless-stopped
+    command: ['start.sh', 'microservices']
+    # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/hardware-transcoding
+    #   file: hwaccel.transcoding.yml
+    #   service: cpu # set to one of [nvenc, quicksync, rkmpp, vaapi, vaapi-wsl] for accelerated transcoding
+    volumes:
+      - /exosx20/media/photos.test:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      DB_DATABASE_NAME: ${IMMICH_DB_NAME}
+      DB_USERNAME: ${IMMICH_DB_USER}
+      DB_PASSWORD: /run/secrets/immich_db_password
+      DB_HOSTNAME: immich-db
+      REDIS_HOSTNAME: immich-redis
+    secrets:
+      - immich_db_password
+    networks:
+      - immich
+#+end_src
+
+*** Machine Learning
+#+begin_src yaml
+  immich-machine-learning:
+    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
+    container_name: immich-machine-learning
+    tty: true # enable colorized logs
+    restart: unless-stopped
+    # For hardware acceleration, add one of -[armnn, cuda, openvino] to the image tag.
+    # Example tag: ${IMMICH_VERSION:-release}-cuda
+    # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/ml-hardware-acceleration
+    #   file: hwaccel.ml.yml
+    #   service: cpu # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference - use the `-wsl` version for WSL2 where applicable
+    volumes:
+      - model-cache:/cache
+    environment:
+      DB_DATABASE_NAME: ${IMMICH_DB_NAME}
+      DB_USERNAME: ${IMMICH_DB_USER}
+      DB_PASSWORD: /run/secrets/immich_db_password
+      DB_HOSTNAME: immich-db
+      REDIS_HOSTNAME: immich-redis
+    secrets:
+      - immich_db_password
+    networks:
+      - immich
+#+end_src
+
+*** Database
+#+begin_src yaml
+  immich-db:
+    image: tensorchord/pgvecto-rs:pg14-v0.2.0
+    container_name: immich-db
+    hostname: immich-db
+    tty: true # enable colorized logs
+    restart: unless-stopped
+    command: ["postgres", "-c" ,"shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
+    volumes:
+      - /home/docker/immich/db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${IMMICH_DB_NAME}
+      POSTGRES_USER: ${IMMICH_DB_USER}
+      POSTGRES_PASSWORD: /run/secrets/immich_db_password
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+    secrets:
+      - immich_db_password
+    networks:
+      - immich
+#+end_src
+
+*** Redis
+#+begin_src yaml
+  immich-redis:
+    image: redis:alpine
+    container_name: immich-redis
+    tty: true # enable colorized logs
+    restart: unless-stopped
+    networks:
+      - immich
 #+end_src
 
 ** Plex
