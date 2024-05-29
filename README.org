@@ -7,7 +7,6 @@
 
 * Table of Contents :toc:
 - [[#usage][Usage]]
-- [[#version][Version]]
 - [[#networks][Networks]]
 - [[#secrets][Secrets]]
 - [[#services][Services]]
@@ -42,11 +41,6 @@ Update images
 #+begin_example shell
 docker-compose build --pull
 #+end_example
-
-* Version
-#+begin_src yaml
-version: '3'
-#+end_src
 
 * Networks
 #+begin_src yaml
