@@ -8,6 +8,7 @@ networks:
       config:
         - subnet: 172.11.0.0/24
   nextcloud:
+  immich:
   vpn:
   grafana:
   webtrees:
@@ -17,6 +18,8 @@ secrets:
     file: secrets/db_password
   db_root_password:
     file: secrets/db_root_password
+  immich_db_password:
+    file: secrets/immich/db_password
   webtrees_password:
     file: secrets/webtrees/password
   webtrees_db_password:
@@ -355,6 +358,108 @@ services:
     networks:
       - grafana
       - hass
+
+  immich:
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    container_name: immich
+    hostname: immich
+    tty: true # enable colorized logs
+    depends_on:
+      - immich-db
+      - immich-redis
+    restart: unless-stopped
+    command: ['start.sh', 'immich']
+    ports:
+      - ${IMMICH_LOCAL_PORT}:3001
+    volumes:
+      - /exosx20/immich:/usr/src/app/upload
+      - /exosx20/media/photos:/usr/src/app/external
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      VIRTUAL_HOST: ${IMMICH_HOST}
+      VIRTUAL_PORT: 3001
+      LETSENCRYPT_HOST: ${IMMICH_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+      DB_DATABASE_NAME: ${IMMICH_DB_NAME}
+      DB_USERNAME: ${IMMICH_DB_USER}
+      DB_PASSWORD: /run/secrets/immich_db_password
+      DB_HOSTNAME: immich-db
+      REDIS_HOSTNAME: immich-redis
+      TZ: ${TIME_ZONE}
+    secrets:
+      - immich_db_password
+    networks:
+      - proxy-tier
+      - immich
+
+  immich-microservices:
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    container_name: immich-microservices
+    tty: true # enable colorized logs
+    depends_on:
+      - immich-db
+      - immich-redis
+    restart: unless-stopped
+    command: ['start.sh', 'microservices']
+    # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/hardware-transcoding
+    #   file: hwaccel.transcoding.yml
+    #   service: cpu # set to one of [nvenc, quicksync, rkmpp, vaapi, vaapi-wsl] for accelerated transcoding
+    volumes:
+      - /exosx20/immich:/usr/src/app/upload
+      - /exosx20/media/photos:/usr/src/app/external
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      DB_DATABASE_NAME: ${IMMICH_DB_NAME}
+      DB_USERNAME: ${IMMICH_DB_USER}
+      DB_PASSWORD: /run/secrets/immich_db_password
+      DB_HOSTNAME: immich-db
+      REDIS_HOSTNAME: immich-redis
+    secrets:
+      - immich_db_password
+    networks:
+      - immich
+
+  immich-machine-learning:
+    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
+    container_name: immich-machine-learning
+    tty: true # enable colorized logs
+    restart: unless-stopped
+    # For hardware acceleration, add one of -[armnn, cuda, openvino] to the image tag.
+    # Example tag: ${IMMICH_VERSION:-release}-cuda
+    # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/ml-hardware-acceleration
+    #   file: hwaccel.ml.yml
+    #   service: cpu # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference - use the `-wsl` version for WSL2 where applicable
+    volumes:
+      - /exosx20/.cache/immich:/cache
+    networks:
+      - immich
+
+  immich-db:
+    image: tensorchord/pgvecto-rs:pg14-v0.2.0
+    container_name: immich-db
+    hostname: immich-db
+    tty: true # enable colorized logs
+    restart: unless-stopped
+    command: ["postgres", "-c" ,"shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
+    volumes:
+      - /home/docker/immich/db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${IMMICH_DB_NAME}
+      POSTGRES_USER: ${IMMICH_DB_USER}
+      POSTGRES_PASSWORD: /run/secrets/immich_db_password
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+    secrets:
+      - immich_db_password
+    networks:
+      - immich
+
+  immich-redis:
+    image: redis:alpine
+    container_name: immich-redis
+    tty: true # enable colorized logs
+    restart: unless-stopped
+    networks:
+      - immich
 
   plex:
     image: plexinc/pms-docker
