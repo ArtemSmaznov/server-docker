@@ -10,7 +10,6 @@
 - [[#version][Version]]
 - [[#networks][Networks]]
 - [[#secrets][Secrets]]
-- [[#volumes][Volumes]]
 - [[#services][Services]]
   - [[#reverse-proxy][Reverse Proxy]]
   - [[#dd-client][DD Client]]
@@ -93,12 +92,6 @@ secrets:
     file: secrets/digikam/db_password
   digikam_db_root_password:
     file: secrets/digikam/db_root_password
-#+end_src
-
-* Volumes
-#+begin_src yaml
-volumes:
-  model-cache:
 #+end_src
 
 * Services
@@ -611,7 +604,7 @@ https://haugene.github.io/docker-transmission-openvpn/
     ports:
       - ${IMMICH_LOCAL_PORT}:3001
     volumes:
-      - /exosx20/media/photos.test:/usr/src/app/upload
+      - /exosx20/immich:/usr/src/app/upload
       - /etc/localtime:/etc/localtime:ro
     environment:
       VIRTUAL_HOST: ${IMMICH_HOST}
@@ -646,7 +639,7 @@ https://haugene.github.io/docker-transmission-openvpn/
     #   file: hwaccel.transcoding.yml
     #   service: cpu # set to one of [nvenc, quicksync, rkmpp, vaapi, vaapi-wsl] for accelerated transcoding
     volumes:
-      - /exosx20/media/photos.test:/usr/src/app/upload
+      - /exosx20/immich:/usr/src/app/upload
       - /etc/localtime:/etc/localtime:ro
     environment:
       DB_DATABASE_NAME: ${IMMICH_DB_NAME}
@@ -673,7 +666,7 @@ https://haugene.github.io/docker-transmission-openvpn/
     #   file: hwaccel.ml.yml
     #   service: cpu # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference - use the `-wsl` version for WSL2 where applicable
     volumes:
-      - model-cache:/cache
+      - /exosx20/.cache/immich:/cache
     networks:
       - immich
 #+end_src
