@@ -368,7 +368,6 @@ services:
       - immich-db
       - immich-redis
     restart: unless-stopped
-    command: ['start.sh', 'immich']
     ports:
       - ${IMMICH_LOCAL_PORT}:3001
     volumes:
@@ -390,33 +389,6 @@ services:
       - immich_db_password
     networks:
       - proxy-tier
-      - immich
-
-  immich-microservices:
-    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
-    container_name: immich-microservices
-    tty: true # enable colorized logs
-    depends_on:
-      - immich-db
-      - immich-redis
-    restart: unless-stopped
-    command: ['start.sh', 'microservices']
-    # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/hardware-transcoding
-    #   file: hwaccel.transcoding.yml
-    #   service: cpu # set to one of [nvenc, quicksync, rkmpp, vaapi, vaapi-wsl] for accelerated transcoding
-    volumes:
-      - /exosx20/immich:/usr/src/app/upload
-      - /exosx20/media/photos:/usr/src/app/external
-      - /etc/localtime:/etc/localtime:ro
-    environment:
-      DB_DATABASE_NAME: ${IMMICH_DB_NAME}
-      DB_USERNAME: ${IMMICH_DB_USER}
-      DB_PASSWORD: /run/secrets/immich_db_password
-      DB_HOSTNAME: immich-db
-      REDIS_HOSTNAME: immich-redis
-    secrets:
-      - immich_db_password
-    networks:
       - immich
 
   immich-machine-learning:
