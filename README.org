@@ -561,7 +561,15 @@ https://haugene.github.io/docker-transmission-openvpn/
       - ${GRAFANA_LOCAL_PORT}:3000
     volumes:
       - /home/docker/grafana/app:/var/lib/grafana
+    environment:
+      VIRTUAL_HOST: ${GRAFANA_HOST}
+      VIRTUAL_PORT: 3000
+      LETSENCRYPT_HOST: ${GRAFANA_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+      GF_SERVER_ROOT_URL: https://${GRAFANA_HOST}
+      GF_SERVER_DOMAIN: ${MY_DOMAIN}
     networks:
+      - proxy-tier
       - grafana
       - hass
 #+end_src
