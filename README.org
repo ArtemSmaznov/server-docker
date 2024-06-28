@@ -550,7 +550,7 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** App
 #+begin_src yaml
   grafana:
-    image: grafana/grafana-oss
+    image: grafana/grafana-oss:${GRAFANA_VERSION:-preview}
     container_name: grafana
     tty: true # enable colorized logs
     restart: unless-stopped
