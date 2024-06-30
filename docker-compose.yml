@@ -75,7 +75,8 @@ services:
       - /home/docker/proxy/html:/usr/share/nginx/html
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
-      - DEFAULT_EMAIL=${MY_EMAIL}
+      # app
+      DEFAULT_EMAIL: ${MY_EMAIL}
     networks:
       - proxy-tier
 
@@ -87,9 +88,10 @@ services:
     volumes:
       - /home/docker/dns:/config
     environment:
-      - PUID=${UID}
-      - PGID=${GID}
-      - TZ=${TIME_ZONE}
+      # app
+      PUID: ${UID}
+      PGID: ${GID}
+      TZ: ${TIME_ZONE}
 
   home:
     <<: *service_default
@@ -98,14 +100,17 @@ services:
     volumes:
       - /home/docker/heimdall:/config
     environment:
-      - VIRTUAL_HOST=${HOME_HOST}
-      - VIRTUAL_PORT=443
-      - VIRTUAL_PROTO=https
-      - LETSENCRYPT_HOST=${HOME_HOST}
-      - LETSENCRYPT_EMAIL=${MY_EMAIL}
-      - PUID=${UID}
-      - PGID=${GID}
-      - TZ=${TIME_ZONE}
+      # proxy
+      VIRTUAL_HOST: ${HOME_HOST}
+      VIRTUAL_PORT: 443
+      VIRTUAL_PROTO: https
+      LETSENCRYPT_HOST: ${HOME_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      PUID: ${UID}
+      PGID: ${GID}
+      TZ: ${TIME_ZONE}
     networks:
       - proxy-tier
 
@@ -123,19 +128,22 @@ services:
       - /exosx20/downloads/watch:/watch
       - /exosx20/media/videos:/downloads/videos
     environment:
-      - VIRTUAL_HOST=${TRANSMISSION_HOST}
-      - VIRTUAL_PORT=${TRANSMISSION_WEBUI_PORT}
-      - LETSENCRYPT_HOST=${TRANSMISSION_HOST}
-      - LETSENCRYPT_EMAIL=${MY_EMAIL}
-      - LOCAL_NETWORK=192.168.0.0/16
-      #- LOCAL_NETWORK=172.10.0.0/24
-      - TRANSMISSION_DOWNLOAD_DIR=/downloads
-      - TRANSMISSION_INCOMPLETE_DIR=/downloads/incomplete
-      - TRANSMISSION_RPC_PORT=${TRANSMISSION_WEBUI_PORT}
-      - PUID=${UID}
-      - PGID=${GID}
-      - TZ=${TIME_ZONE}
-      - HEALTH_CHECK_HOST=archlinux.org
+      # proxy
+      VIRTUAL_HOST: ${TRANSMISSION_HOST}
+      VIRTUAL_PORT: ${TRANSMISSION_WEBUI_PORT}
+      LETSENCRYPT_HOST: ${TRANSMISSION_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      LOCAL_NETWORK: 192.168.0.0/16
+      #LOCAL_NETWORK: 172.10.0.0/24
+      TRANSMISSION_DOWNLOAD_DIR: /downloads
+      TRANSMISSION_INCOMPLETE_DIR: /downloads/incomplete
+      TRANSMISSION_RPC_PORT: ${TRANSMISSION_WEBUI_PORT}
+      PUID: ${UID}
+      PGID: ${GID}
+      TZ: ${TIME_ZONE}
+      HEALTH_CHECK_HOST: archlinux.org
     env_file:
       - secrets/vpn.env
     secrets:
@@ -160,14 +168,15 @@ services:
       - type: tmpfs
         target: /tmp:exec
     environment:
-      - PUID=${UID}
-      - PGID=${UID}
-      - MYSQL_HOST=nextcloud-db
-      - REDIS_HOST=nextcloud-redis
-      - MYSQL_DATABASE=${NEXTCLOUD_DB_NAME}
-      - MYSQL_USER=${NEXTCLOUD_DB_USER}
-      - MYSQL_PASSWORD_FILE=/run/secrets/db_password
-      - PHP_MEMORY_LIMIT=2048M
+      # app
+      PUID: ${UID}
+      PGID: ${UID}
+      MYSQL_HOST: nextcloud-db
+      REDIS_HOST: nextcloud-redis
+      MYSQL_DATABASE: ${NEXTCLOUD_DB_NAME}
+      MYSQL_USER: ${NEXTCLOUD_DB_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      PHP_MEMORY_LIMIT: 2048M
     secrets:
       - db_password
     networks:
@@ -186,10 +195,11 @@ services:
     volumes:
       - /home/docker/nextcloud/app:/var/www/html:ro
     environment:
-      - VIRTUAL_HOST=${NEXTCLOUD_HOST}
-      - VIRTUAL_PORT=80
-      - LETSENCRYPT_HOST=${NEXTCLOUD_HOST}
-      - LETSENCRYPT_EMAIL=${MY_EMAIL}
+      # proxy
+      VIRTUAL_HOST: ${NEXTCLOUD_HOST}
+      VIRTUAL_PORT: 80
+      LETSENCRYPT_HOST: ${NEXTCLOUD_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
     networks:
       - proxy-tier
       - nextcloud
@@ -217,12 +227,13 @@ services:
     volumes:
       - /home/docker/nextcloud/db:/var/lib/mysql
     environment:
-      - MARIADB_AUTO_UPGRADE=1
-      - MARIADB_DISABLE_UPGRADE_BACKUP=1
-      - MYSQL_DATABASE=${NEXTCLOUD_DB_NAME}
-      - MYSQL_USER=${NEXTCLOUD_DB_USER}
-      - MYSQL_PASSWORD_FILE=/run/secrets/db_password
-      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db_root_password
+      # app
+      MARIADB_AUTO_UPGRADE: 1
+      MARIADB_DISABLE_UPGRADE_BACKUP: 1
+      MYSQL_DATABASE: ${NEXTCLOUD_DB_NAME}
+      MYSQL_USER: ${NEXTCLOUD_DB_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
     secrets:
       - db_password
       - db_root_password
@@ -247,10 +258,11 @@ services:
       - /home/docker/home-assistant/config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - VIRTUAL_HOST=${HOME_ASSISTANT_HOST}
-      - VIRTUAL_PORT=8123
-      - LETSENCRYPT_HOST=${HOME_ASSISTANT_HOST}
-      - LETSENCRYPT_EMAIL=${MY_EMAIL}
+      # proxy
+      VIRTUAL_HOST: ${HOME_ASSISTANT_HOST}
+      VIRTUAL_PORT: 8123
+      LETSENCRYPT_HOST: ${HOME_ASSISTANT_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
     networks:
       - proxy-tier
       - hass
@@ -269,12 +281,15 @@ services:
     devices:
       - /dev/serial/by-id/usb-0658_0200-if00:/dev/zwave
     environment:
-      - VIRTUAL_HOST=${ZWAVE_JS_HOST}
-      - VIRTUAL_PORT=8091
-      - LETSENCRYPT_HOST=${ZWAVE_JS_HOST}
-      - LETSENCRYPT_EMAIL=${MY_EMAIL}
-      - ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
-      - TZ=${TIME_ZONE}
+      # proxy
+      VIRTUAL_HOST: ${ZWAVE_JS_HOST}
+      VIRTUAL_PORT: 8091
+      LETSENCRYPT_HOST: ${ZWAVE_JS_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      ZWAVEJS_EXTERNAL_CONFIG: /usr/src/app/store/.config-db
+      TZ: ${TIME_ZONE}
     env_file:
       - secrets/zwave-js-ui.env
     networks:
@@ -345,10 +360,13 @@ services:
     volumes:
       - /home/docker/grafana/app:/var/lib/grafana
     environment:
+      # proxy
       VIRTUAL_HOST: ${GRAFANA_HOST}
       VIRTUAL_PORT: 3000
       LETSENCRYPT_HOST: ${GRAFANA_HOST}
       LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
       GF_SERVER_ROOT_URL: https://${GRAFANA_HOST}
       GF_SERVER_DOMAIN: ${MY_DOMAIN}
 
@@ -379,10 +397,13 @@ services:
       - /exosx20/media/photos:/usr/src/app/external
       - /etc/localtime:/etc/localtime:ro
     environment:
+      # proxy
       VIRTUAL_HOST: ${IMMICH_HOST}
       VIRTUAL_PORT: 3001
       LETSENCRYPT_HOST: ${IMMICH_HOST}
       LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
       DB_DATABASE_NAME: ${IMMICH_DB_NAME}
       DB_USERNAME: ${IMMICH_DB_USER}
       DB_PASSWORD: /run/secrets/immich_db_password
@@ -418,6 +439,7 @@ services:
     volumes:
       - /home/docker/immich/db:/var/lib/postgresql/data
     environment:
+      # app
       POSTGRES_DB: ${IMMICH_DB_NAME}
       POSTGRES_USER: ${IMMICH_DB_USER}
       POSTGRES_PASSWORD: /run/secrets/immich_db_password
@@ -453,14 +475,17 @@ services:
       - /home/docker/plex/transcode:/transcode
       - /exosx20/media/videos:/data/videos
     environment:
-      - VIRTUAL_HOST=${PLEX_HOST}
-      - VIRTUAL_PORT=32400
-      - LETSENCRYPT_HOST=${PLEX_HOST}
-      - LETSENCRYPT_EMAIL=${MY_EMAIL}
-      - PLEX_CLAIM=
-      - PLEX_UID=${UID}
-      - PLEX_GID=${GID}
-      - TZ=${TIME_ZONE}
+      # proxy
+      VIRTUAL_HOST: ${PLEX_HOST}
+      VIRTUAL_PORT: 32400
+      LETSENCRYPT_HOST: ${PLEX_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      PLEX_CLAIM:
+      PLEX_UID: ${UID}
+      PLEX_GID: ${GID}
+      TZ: ${TIME_ZONE}
     networks:
       - proxy-tier
       - hass
@@ -478,10 +503,11 @@ services:
       - /home/docker/jellyfin/cache:/cache
       - /exosx20/media/videos:/media/videos:ro
     environment:
-      - VIRTUAL_HOST=${JELLYFIN_HOST}
-      - VIRTUAL_PORT=8096
-      - LETSENCRYPT_HOST=${JELLYFIN_HOST}
-      - LETSENCRYPT_EMAIL=${MY_EMAIL}
+      # proxy
+      VIRTUAL_HOST: ${JELLYFIN_HOST}
+      VIRTUAL_PORT: 8096
+      LETSENCRYPT_HOST: ${JELLYFIN_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
     networks:
       - proxy-tier
       - hass
@@ -493,10 +519,11 @@ services:
     volumes:
       - /home/docker/anki:/app/data
     environment:
-      - VIRTUAL_HOST=${ANKI_HOST}
-      - VIRTUAL_PORT=27701
-      - LETSENCRYPT_HOST=${ANKI_HOST}
-      - LETSENCRYPT_EMAIL=${MY_EMAIL}
+      # proxy
+      VIRTUAL_HOST: ${ANKI_HOST}
+      VIRTUAL_PORT: 27701
+      LETSENCRYPT_HOST: ${ANKI_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
     networks:
       - proxy-tier
 
@@ -507,10 +534,11 @@ services:
     volumes:
       - /home/docker/archi-steam-farm:/app/config
     environment:
-      - VIRTUAL_HOST=${ASF_HOST}
-      - VIRTUAL_PORT=1242
-      - LETSENCRYPT_HOST=${ASF_HOST}
-      - LETSENCRYPT_EMAIL=${MY_EMAIL}
+      # proxy
+      VIRTUAL_HOST: ${ASF_HOST}
+      VIRTUAL_PORT: 1242
+      LETSENCRYPT_HOST: ${ASF_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
     networks:
       - proxy-tier
 
@@ -529,6 +557,7 @@ services:
       VIRTUAL_PORT: 80
       LETSENCRYPT_HOST: ${WEBTREES_HOST}
       LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
       # app
       PRETTY_URLS: true
       HTTPS: false
@@ -563,12 +592,13 @@ services:
     volumes:
       - /home/docker/webtrees/db:/var/lib/mysql
     environment:
-      - MARIADB_AUTO_UPGRADE=1
-      - MARIADB_DISABLE_UPGRADE_BACKUP=1
-      - MARIADB_DATABASE=${WEBTREES_DB_NAME}
-      - MARIADB_USER=${WEBTREES_DB_USER}
-      - MARIADB_PASSWORD_FILE=/run/secrets/webtrees_db_password
-      - MARIADB_ROOT_PASSWORD_FILE=/run/secrets/webtrees_db_root_password
+      # app
+      MARIADB_AUTO_UPGRADE: 1
+      MARIADB_DISABLE_UPGRADE_BACKUP: 1
+      MARIADB_DATABASE: ${WEBTREES_DB_NAME}
+      MARIADB_USER: ${WEBTREES_DB_USER}
+      MARIADB_PASSWORD_FILE: /run/secrets/webtrees_db_password
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/webtrees_db_root_password
     secrets:
       - webtrees_db_password
       - webtrees_db_root_password
@@ -585,10 +615,11 @@ services:
     volumes:
       - /home/docker/digikam/db:/var/lib/mysql
     environment:
-      - MARIADB_DATABASE=${DIGIKAM_DB_NAME}
-      - MARIADB_USER=${DIGIKAM_DB_USER}
-      - MARIADB_PASSWORD_FILE=/run/secrets/digikam_db_password
-      - MARIADB_ROOT_PASSWORD_FILE=/run/secrets/digikam_db_root_password
+      # app
+      MARIADB_DATABASE: ${DIGIKAM_DB_NAME}
+      MARIADB_USER: ${DIGIKAM_DB_USER}
+      MARIADB_PASSWORD_FILE: /run/secrets/digikam_db_password
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/digikam_db_root_password
     secrets:
       - digikam_db_password
       - digikam_db_root_password
