@@ -320,7 +320,7 @@ services:
       - 10300:10300
     volumes:
       - /home/docker/home-assistant/wyoming-whisper:/data
-    command: --model=small --language=en
+    command: --model=distil-small.en --language=en
     networks:
       - hass
 
