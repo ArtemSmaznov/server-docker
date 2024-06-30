@@ -782,7 +782,7 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** App
 #+begin_src yaml
   webtrees:
-    image: nathanvaughn/webtrees
+    image: nathanvaughn/webtrees:${WEBTREES_VERSION}
     container_name: webtrees
     tty: true # enable colorized logs
     restart: unless-stopped
