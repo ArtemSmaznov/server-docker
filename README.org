@@ -685,7 +685,7 @@ https://haugene.github.io/docker-transmission-openvpn/
 ** Plex
 #+begin_src yaml
   plex:
-    image: plexinc/pms-docker
+    image: plexinc/pms-docker:${PLEX_VERSION}
     container_name: plex-media-server
     hostname: plex-media-server
     tty: true # enable colorized logs
