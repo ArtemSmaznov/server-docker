@@ -479,6 +479,28 @@ services:
       - proxy-tier
       - hass
 
+  jellyfin:
+    image: jellyfin/jellyfin:${JELLYFIN_VERSION}
+    container_name: jellyfin
+    hostname: jellyfin
+    user: ${UID}:${GID}
+    tty: true # enable colorized logs
+    restart: unless-stopped
+    ports:
+      - ${JELLYFIN_LOCAL_PORT}:8096/tcp
+    volumes:
+      - /home/docker/jellyfin/config:/config
+      - /home/docker/jellyfin/cache:/cache
+      - /exosx20/media/videos:/media/videos:ro
+    environment:
+      - VIRTUAL_HOST=${JELLYFIN_HOST}
+      - VIRTUAL_PORT=8096
+      - LETSENCRYPT_HOST=${JELLYFIN_HOST}
+      - LETSENCRYPT_EMAIL=${MY_EMAIL}
+    networks:
+      - proxy-tier
+      - hass
+
   anki:
     image: kuklinistvan/anki-sync-server:${ANKI_VERSION}
     container_name: anki
