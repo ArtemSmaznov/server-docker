@@ -763,7 +763,7 @@ https://haugene.github.io/docker-transmission-openvpn/
 ** Archi Steam Farm
 #+begin_src yaml
   asf:
-    image: justarchi/archisteamfarm
+    image: justarchi/archisteamfarm:${ASF_VERSION}
     container_name: asf
     tty: true # enable colorized logs
     restart: unless-stopped

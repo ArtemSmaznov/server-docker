@@ -495,7 +495,7 @@ services:
       - proxy-tier
 
   asf:
-    image: justarchi/archisteamfarm
+    image: justarchi/archisteamfarm:${ASF_VERSION}
     container_name: asf
     tty: true # enable colorized logs
     restart: unless-stopped
