@@ -154,7 +154,7 @@ services:
 ** Home
 #+begin_src yaml
   home:
-    image: linuxserver/heimdall:latest
+    image: linuxserver/heimdall:${HOME_VERSION}
     container_name: home
     tty: true # enable colorized logs
     restart: unless-stopped
