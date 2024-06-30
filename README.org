@@ -512,23 +512,6 @@ https://haugene.github.io/docker-transmission-openvpn/
       - proxy-tier
 #+end_src
 
-*** Wyoming Piper
-#+begin_src yaml
-  piper:
-    <<: *service_default
-    image: rhasspy/wyoming-piper:${WYOMING_PIPER_VERSION}
-    container_name: piper
-    depends_on:
-      - hass
-    ports:
-      - 10200:10200
-    volumes:
-      - /home/docker/home-assistant/wyoming-piper:/data
-    command: --voice=en_US-lessac-medium
-    networks:
-      - hass
-#+end_src
-
 *** Wyoming Whisper
 #+begin_src yaml
   whisper:
@@ -542,6 +525,23 @@ https://haugene.github.io/docker-transmission-openvpn/
     volumes:
       - /home/docker/home-assistant/wyoming-whisper:/data
     command: --model=distil-small.en --language=en
+    networks:
+      - hass
+#+end_src
+
+*** Wyoming Piper
+#+begin_src yaml
+  piper:
+    <<: *service_default
+    image: rhasspy/wyoming-piper:${WYOMING_PIPER_VERSION}
+    container_name: piper
+    depends_on:
+      - hass
+    ports:
+      - 10200:10200
+    volumes:
+      - /home/docker/home-assistant/wyoming-piper:/data
+    command: --voice=en_US-lessac-medium
     networks:
       - hass
 #+end_src

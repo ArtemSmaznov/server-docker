@@ -296,20 +296,6 @@ services:
       - hass
       - proxy-tier
 
-  piper:
-    <<: *service_default
-    image: rhasspy/wyoming-piper:${WYOMING_PIPER_VERSION}
-    container_name: piper
-    depends_on:
-      - hass
-    ports:
-      - 10200:10200
-    volumes:
-      - /home/docker/home-assistant/wyoming-piper:/data
-    command: --voice=en_US-lessac-medium
-    networks:
-      - hass
-
   whisper:
     <<: *service_default
     image: rhasspy/wyoming-whisper:${WYOMING_WHISPER_VERSION}
@@ -321,6 +307,20 @@ services:
     volumes:
       - /home/docker/home-assistant/wyoming-whisper:/data
     command: --model=distil-small.en --language=en
+    networks:
+      - hass
+
+  piper:
+    <<: *service_default
+    image: rhasspy/wyoming-piper:${WYOMING_PIPER_VERSION}
+    container_name: piper
+    depends_on:
+      - hass
+    ports:
+      - 10200:10200
+    volumes:
+      - /home/docker/home-assistant/wyoming-piper:/data
+    command: --voice=en_US-lessac-medium
     networks:
       - hass
 
