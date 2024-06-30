@@ -720,7 +720,7 @@ https://haugene.github.io/docker-transmission-openvpn/
 ** Jellyfin
 #+begin_src yaml :tangle no
   jellyfin:
-    image: jellyfin/jellyfin
+    image: jellyfin/jellyfin:${JELLYFIN_VERSION}
     container_name: jellyfin
     hostname: jellyfin
     user: ${UID}:${GID}
