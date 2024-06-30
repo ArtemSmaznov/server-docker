@@ -446,8 +446,6 @@ https://haugene.github.io/docker-transmission-openvpn/
     container_name: home-assistant
     tty: true # enable colorized logs
     privileged: true
-    depends_on:
-      - grafana-influxdb
     restart: unless-stopped
     ports:
       - ${HOME_ASSISTANT_LOCAL_PORT}:8123
@@ -546,16 +544,31 @@ https://haugene.github.io/docker-transmission-openvpn/
       - hass
 #+end_src
 
+*** Influx DB
+#+begin_src yaml
+  grafana-influxdb:
+    image: influxdb:${INFLUXDB_VERSION}
+    container_name: grafana-influxdb
+    tty: true # enable colorized logs
+    restart: unless-stopped
+    depends_on:
+      - hass
+    ports:
+      - ${INFLUXDB_LOCAL_PORT}:8086
+    volumes:
+      - /home/docker/grafana/influxdb:/var/lib/influxdb2
+    networks:
+      - grafana
+      - hass
+#+end_src
+
 ** Grafana
-*** App
 #+begin_src yaml
   grafana:
     image: grafana/grafana-oss:${GRAFANA_VERSION:-preview}
     container_name: grafana
     tty: true # enable colorized logs
     restart: unless-stopped
-    depends_on:
-      - grafana-influxdb
     user: '${UID}'
     ports:
       - ${GRAFANA_LOCAL_PORT}:3000
@@ -578,22 +591,6 @@ https://haugene.github.io/docker-transmission-openvpn/
       GF_DATE_FORMATS_INTERVAL_YEAR: YYYY
     networks:
       - proxy-tier
-      - grafana
-      - hass
-#+end_src
-
-*** Influx DB
-#+begin_src yaml
-  grafana-influxdb:
-    image: influxdb:latest
-    container_name: grafana-influxdb
-    tty: true # enable colorized logs
-    restart: unless-stopped
-    ports:
-      - ${INFLUXDB_LOCAL_PORT}:8086
-    volumes:
-      - /home/docker/grafana/influxdb:/var/lib/influxdb2
-    networks:
       - grafana
       - hass
 #+end_src
