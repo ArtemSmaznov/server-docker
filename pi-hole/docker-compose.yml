@@ -7,7 +7,7 @@ secrets:
 services:
 
   pi-hole:
-    image: pihole/pihole:latest
+    image: pihole/pihole:${PIHOLE_VERSION}
     container_name: pi-hole
     hostname: pi-hole
     tty: true # enable colorized logs
