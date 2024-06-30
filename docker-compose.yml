@@ -37,6 +37,10 @@ secrets:
   digikam_db_root_password:
     file: secrets/digikam/db_root_password
 
+x-default: &service_default
+  tty: true # enable colorized logs
+  restart: unless-stopped
+
 services:
 
   proxy:
@@ -58,9 +62,9 @@ services:
       - proxy-tier
 
   acme:
+    <<: *service_default
     image: nginxproxy/acme-companion:${ACME_VERSION}
     container_name: acme
-    tty: true # enable colorized logs
     restart: always
     depends_on:
       - proxy
@@ -76,11 +80,10 @@ services:
       - proxy-tier
 
   ddclient:
+    <<: *service_default
     image: lscr.io/linuxserver/ddclient:${DD_VERSION}
     container_name: ddclient
     hostname: ddclient
-    tty: true
-    restart: unless-stopped
     volumes:
       - /home/docker/dns:/config
     environment:
@@ -89,10 +92,9 @@ services:
       - TZ=${TIME_ZONE}
 
   home:
+    <<: *service_default
     image: linuxserver/heimdall:${HOME_VERSION}
     container_name: home
-    tty: true # enable colorized logs
-    restart: unless-stopped
     volumes:
       - /home/docker/heimdall:/config
     environment:
@@ -108,10 +110,9 @@ services:
       - proxy-tier
 
   transmission:
+    <<: *service_default
     image: haugene/transmission-openvpn:${TRANSMISSION_VERSION}
     container_name: transmission
-    tty: true # enable colorized logs
-    restart: unless-stopped
     cap_add:
       - NET_ADMIN
     ports:
@@ -195,14 +196,13 @@ services:
       - hass
 
   nextcloud-cron:
+    <<: *service_default
     image: nextcloud:fpm-alpine
     entrypoint: /cron.sh
     container_name: nextcloud-cron
-    tty: true # enable colorized logs
     depends_on:
       - nextcloud-db
       - nextcloud-redis
-    restart: unless-stopped
     volumes:
       - /home/docker/nextcloud/app:/var/www/html
       - /home/docker/nextcloud/cron:/var/spool/cron/crontabs
@@ -210,10 +210,9 @@ services:
       - nextcloud
 
   nextcloud-db:
+    <<: *service_default
     image: mariadb
     container_name: nextcloud-db
-    tty: true # enable colorized logs
-    restart: unless-stopped
     command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     volumes:
       - /home/docker/nextcloud/db:/var/lib/mysql
@@ -231,19 +230,17 @@ services:
       - nextcloud
 
   nextcloud-redis:
+    <<: *service_default
     image: redis:alpine
     container_name: nextcloud-redis
-    tty: true # enable colorized logs
-    restart: unless-stopped
     networks:
       - nextcloud
 
   hass:
+    <<: *service_default
     image: ghcr.io/home-assistant/home-assistant:${HOME_ASSISTANT_VERSION}
     container_name: home-assistant
-    tty: true # enable colorized logs
     privileged: true
-    restart: unless-stopped
     ports:
       - ${HOME_ASSISTANT_LOCAL_PORT}:8123
     volumes:
@@ -259,10 +256,9 @@ services:
       - hass
 
   zwave-js-ui:
+    <<: *service_default
     image: zwavejs/zwave-js-ui:${ZWAVE_JS_VERSION}
     container_name: zwave-js-ui
-    tty: true # enable colorized logs
-    restart: unless-stopped
     stop_signal: SIGINT
     depends_on:
       - hass
@@ -286,10 +282,9 @@ services:
       - proxy-tier
 
   piper:
+    <<: *service_default
     image: rhasspy/wyoming-piper:${WYOMING_PIPER_VERSION}
     container_name: piper
-    tty: true # enable colorized logs
-    restart: unless-stopped
     depends_on:
       - hass
     ports:
@@ -301,10 +296,9 @@ services:
       - hass
 
   whisper:
+    <<: *service_default
     image: rhasspy/wyoming-whisper:${WYOMING_WHISPER_VERSION}
     container_name: whisper
-    tty: true # enable colorized logs
-    restart: unless-stopped
     depends_on:
       - hass
     ports:
@@ -316,10 +310,9 @@ services:
       - hass
 
   openwakeword:
+    <<: *service_default
     image: rhasspy/wyoming-openwakeword:${WYOMING_OPENWAKEWORD_VERSION}
     container_name: openwakeword
-    tty: true # enable colorized logs
-    restart: unless-stopped
     depends_on:
       - hass
     ports:
@@ -329,10 +322,9 @@ services:
       - hass
 
   grafana-influxdb:
+    <<: *service_default
     image: influxdb:${INFLUXDB_VERSION}
     container_name: grafana-influxdb
-    tty: true # enable colorized logs
-    restart: unless-stopped
     depends_on:
       - hass
     ports:
@@ -344,10 +336,9 @@ services:
       - hass
 
   grafana:
+    <<: *service_default
     image: grafana/grafana-oss:${GRAFANA_VERSION:-preview}
     container_name: grafana
-    tty: true # enable colorized logs
-    restart: unless-stopped
     user: '${UID}'
     ports:
       - ${GRAFANA_LOCAL_PORT}:3000
@@ -374,14 +365,13 @@ services:
       - hass
 
   immich:
+    <<: *service_default
     image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
     container_name: immich
     hostname: immich
-    tty: true # enable colorized logs
     depends_on:
       - immich-db
       - immich-redis
-    restart: unless-stopped
     ports:
       - ${IMMICH_LOCAL_PORT}:3001
     volumes:
@@ -406,10 +396,9 @@ services:
       - immich
 
   immich-machine-learning:
+    <<: *service_default
     image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
     container_name: immich-machine-learning
-    tty: true # enable colorized logs
-    restart: unless-stopped
     # For hardware acceleration, add one of -[armnn, cuda, openvino] to the image tag.
     # Example tag: ${IMMICH_VERSION:-release}-cuda
     # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/ml-hardware-acceleration
@@ -421,11 +410,10 @@ services:
       - immich
 
   immich-db:
+    <<: *service_default
     image: tensorchord/pgvecto-rs:pg14-v0.2.0
     container_name: immich-db
     hostname: immich-db
-    tty: true # enable colorized logs
-    restart: unless-stopped
     command: ["postgres", "-c" ,"shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
     volumes:
       - /home/docker/immich/db:/var/lib/postgresql/data
@@ -440,19 +428,17 @@ services:
       - immich
 
   immich-redis:
+    <<: *service_default
     image: redis:alpine
     container_name: immich-redis
-    tty: true # enable colorized logs
-    restart: unless-stopped
     networks:
       - immich
 
   plex:
+    <<: *service_default
     image: plexinc/pms-docker:${PLEX_VERSION}
     container_name: plex-media-server
     hostname: plex-media-server
-    tty: true # enable colorized logs
-    restart: unless-stopped
     ports:
       - ${PLEX_LOCAL_PORT}:32400/tcp
       - 8324:8324/tcp
@@ -480,12 +466,11 @@ services:
       - hass
 
   jellyfin:
+    <<: *service_default
     image: jellyfin/jellyfin:${JELLYFIN_VERSION}
     container_name: jellyfin
     hostname: jellyfin
     user: ${UID}:${GID}
-    tty: true # enable colorized logs
-    restart: unless-stopped
     ports:
       - ${JELLYFIN_LOCAL_PORT}:8096/tcp
     volumes:
@@ -502,10 +487,9 @@ services:
       - hass
 
   anki:
+    <<: *service_default
     image: kuklinistvan/anki-sync-server:${ANKI_VERSION}
     container_name: anki
-    tty: true # enable colorized logs
-    restart: unless-stopped
     volumes:
       - /home/docker/anki:/app/data
     environment:
@@ -517,10 +501,9 @@ services:
       - proxy-tier
 
   asf:
+    <<: *service_default
     image: justarchi/archisteamfarm:${ASF_VERSION}
     container_name: asf
-    tty: true # enable colorized logs
-    restart: unless-stopped
     volumes:
       - /home/docker/archi-steam-farm:/app/config
     environment:
@@ -532,10 +515,9 @@ services:
       - proxy-tier
 
   webtrees:
+    <<: *service_default
     image: nathanvaughn/webtrees:${WEBTREES_VERSION}
     container_name: webtrees
-    tty: true # enable colorized logs
-    restart: unless-stopped
     depends_on:
       - webtrees-db
     volumes:
@@ -574,10 +556,9 @@ services:
       - webtrees
 
   webtrees-db:
+    <<: *service_default
     image: mariadb
     container_name: webtrees-db
-    tty: true # enable colorized logs
-    restart: unless-stopped
     command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     volumes:
       - /home/docker/webtrees/db:/var/lib/mysql
@@ -595,10 +576,9 @@ services:
       - webtrees
 
   digikam-db:
+    <<: *service_default
     image: mariadb
     container_name: digikam-db
-    tty: true # enable colorized logs
-    restart: unless-stopped
     ports:
       - ${DIGIKAM_PORT}:3306
     command: --max_allowed_packet=128M --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW

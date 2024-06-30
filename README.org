@@ -9,6 +9,7 @@
 - [[#usage][Usage]]
 - [[#networks][Networks]]
 - [[#secrets][Secrets]]
+- [[#templates][Templates]]
 - [[#services][Services]]
   - [[#reverse-proxy][Reverse Proxy]]
   - [[#dd-client][DD Client]]
@@ -88,6 +89,14 @@ secrets:
     file: secrets/digikam/db_root_password
 #+end_src
 
+* Templates
+Default
+#+begin_src yaml
+x-default: &service_default
+  tty: true # enable colorized logs
+  restart: unless-stopped
+#+end_src
+
 * Services
 #+begin_src yaml
 services:
@@ -117,9 +126,9 @@ services:
 *** Let's Encrypt Companion
 #+begin_src yaml
   acme:
+    <<: *service_default
     image: nginxproxy/acme-companion:${ACME_VERSION}
     container_name: acme
-    tty: true # enable colorized logs
     restart: always
     depends_on:
       - proxy
@@ -138,11 +147,10 @@ services:
 ** DD Client
 #+begin_src yaml
   ddclient:
+    <<: *service_default
     image: lscr.io/linuxserver/ddclient:${DD_VERSION}
     container_name: ddclient
     hostname: ddclient
-    tty: true
-    restart: unless-stopped
     volumes:
       - /home/docker/dns:/config
     environment:
@@ -154,10 +162,9 @@ services:
 ** Home
 #+begin_src yaml
   home:
+    <<: *service_default
     image: linuxserver/heimdall:${HOME_VERSION}
     container_name: home
-    tty: true # enable colorized logs
-    restart: unless-stopped
     volumes:
       - /home/docker/heimdall:/config
     environment:
@@ -177,10 +184,9 @@ services:
 *** WireGuard
 #+begin_src yaml :tangle no
   wireguard:
+    <<: *service_default
     image: linuxserver/wireguard:latest
     container_name: wireguard
-    tty: true # enable colorized logs
-    restart: unless-stopped
     sysctls:
       - net.ipv4.conf.all.src_valid_mark=1
       - net.ipv6.conf.all.disable_ipv6=1
@@ -218,10 +224,9 @@ services:
 *** WireGuard UI
 #+begin_src yaml :tangle no
   wireguard-ui:
+    <<: *service_default
     image: ngoduykhanh/wireguard-ui:latest
     container_name: wireguard-ui
-    tty: true # enable colorized logs
-    restart: unless-stopped
     depends_on:
       - wireguard
     cap_add:
@@ -251,10 +256,9 @@ services:
 Still needs work on opening the peer port
 #+begin_src yaml :tangle no
   transmission:
+    <<: *service_default
     image: linuxserver/transmission:latest
     container_name: transmission
-    tty: true # enable colorized logs
-    restart: unless-stopped
     #depends_on:
     #  - wireguard
     ports:
@@ -291,10 +295,9 @@ Still needs work on opening the peer port
 https://haugene.github.io/docker-transmission-openvpn/
 #+begin_src yaml
   transmission:
+    <<: *service_default
     image: haugene/transmission-openvpn:${TRANSMISSION_VERSION}
     container_name: transmission
-    tty: true # enable colorized logs
-    restart: unless-stopped
     cap_add:
       - NET_ADMIN
     ports:
@@ -388,14 +391,13 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** Cron
 #+begin_src yaml
   nextcloud-cron:
+    <<: *service_default
     image: nextcloud:fpm-alpine
     entrypoint: /cron.sh
     container_name: nextcloud-cron
-    tty: true # enable colorized logs
     depends_on:
       - nextcloud-db
       - nextcloud-redis
-    restart: unless-stopped
     volumes:
       - /home/docker/nextcloud/app:/var/www/html
       - /home/docker/nextcloud/cron:/var/spool/cron/crontabs
@@ -406,10 +408,9 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** Database
 #+begin_src yaml
   nextcloud-db:
+    <<: *service_default
     image: mariadb
     container_name: nextcloud-db
-    tty: true # enable colorized logs
-    restart: unless-stopped
     command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     volumes:
       - /home/docker/nextcloud/db:/var/lib/mysql
@@ -430,10 +431,9 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** Redis
 #+begin_src yaml
   nextcloud-redis:
+    <<: *service_default
     image: redis:alpine
     container_name: nextcloud-redis
-    tty: true # enable colorized logs
-    restart: unless-stopped
     networks:
       - nextcloud
 #+end_src
@@ -442,11 +442,10 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** App
 #+begin_src yaml
   hass:
+    <<: *service_default
     image: ghcr.io/home-assistant/home-assistant:${HOME_ASSISTANT_VERSION}
     container_name: home-assistant
-    tty: true # enable colorized logs
     privileged: true
-    restart: unless-stopped
     ports:
       - ${HOME_ASSISTANT_LOCAL_PORT}:8123
     volumes:
@@ -465,10 +464,9 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** Z-Wave JS UI
 #+begin_src yaml
   zwave-js-ui:
+    <<: *service_default
     image: zwavejs/zwave-js-ui:${ZWAVE_JS_VERSION}
     container_name: zwave-js-ui
-    tty: true # enable colorized logs
-    restart: unless-stopped
     stop_signal: SIGINT
     depends_on:
       - hass
@@ -495,10 +493,9 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** Wyoming Piper
 #+begin_src yaml
   piper:
+    <<: *service_default
     image: rhasspy/wyoming-piper:${WYOMING_PIPER_VERSION}
     container_name: piper
-    tty: true # enable colorized logs
-    restart: unless-stopped
     depends_on:
       - hass
     ports:
@@ -513,10 +510,9 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** Wyoming Whisper
 #+begin_src yaml
   whisper:
+    <<: *service_default
     image: rhasspy/wyoming-whisper:${WYOMING_WHISPER_VERSION}
     container_name: whisper
-    tty: true # enable colorized logs
-    restart: unless-stopped
     depends_on:
       - hass
     ports:
@@ -531,10 +527,9 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** Wyoming Open Wake Word
 #+begin_src yaml
   openwakeword:
+    <<: *service_default
     image: rhasspy/wyoming-openwakeword:${WYOMING_OPENWAKEWORD_VERSION}
     container_name: openwakeword
-    tty: true # enable colorized logs
-    restart: unless-stopped
     depends_on:
       - hass
     ports:
@@ -547,10 +542,9 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** Influx DB
 #+begin_src yaml
   grafana-influxdb:
+    <<: *service_default
     image: influxdb:${INFLUXDB_VERSION}
     container_name: grafana-influxdb
-    tty: true # enable colorized logs
-    restart: unless-stopped
     depends_on:
       - hass
     ports:
@@ -565,10 +559,9 @@ https://haugene.github.io/docker-transmission-openvpn/
 ** Grafana
 #+begin_src yaml
   grafana:
+    <<: *service_default
     image: grafana/grafana-oss:${GRAFANA_VERSION:-preview}
     container_name: grafana
-    tty: true # enable colorized logs
-    restart: unless-stopped
     user: '${UID}'
     ports:
       - ${GRAFANA_LOCAL_PORT}:3000
@@ -599,14 +592,13 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** App
 #+begin_src yaml
   immich:
+    <<: *service_default
     image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
     container_name: immich
     hostname: immich
-    tty: true # enable colorized logs
     depends_on:
       - immich-db
       - immich-redis
-    restart: unless-stopped
     ports:
       - ${IMMICH_LOCAL_PORT}:3001
     volumes:
@@ -634,10 +626,9 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** Machine Learning
 #+begin_src yaml
   immich-machine-learning:
+    <<: *service_default
     image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
     container_name: immich-machine-learning
-    tty: true # enable colorized logs
-    restart: unless-stopped
     # For hardware acceleration, add one of -[armnn, cuda, openvino] to the image tag.
     # Example tag: ${IMMICH_VERSION:-release}-cuda
     # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/ml-hardware-acceleration
@@ -652,11 +643,10 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** Database
 #+begin_src yaml
   immich-db:
+    <<: *service_default
     image: tensorchord/pgvecto-rs:pg14-v0.2.0
     container_name: immich-db
     hostname: immich-db
-    tty: true # enable colorized logs
-    restart: unless-stopped
     command: ["postgres", "-c" ,"shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
     volumes:
       - /home/docker/immich/db:/var/lib/postgresql/data
@@ -674,10 +664,9 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** Redis
 #+begin_src yaml
   immich-redis:
+    <<: *service_default
     image: redis:alpine
     container_name: immich-redis
-    tty: true # enable colorized logs
-    restart: unless-stopped
     networks:
       - immich
 #+end_src
@@ -685,11 +674,10 @@ https://haugene.github.io/docker-transmission-openvpn/
 ** Plex
 #+begin_src yaml
   plex:
+    <<: *service_default
     image: plexinc/pms-docker:${PLEX_VERSION}
     container_name: plex-media-server
     hostname: plex-media-server
-    tty: true # enable colorized logs
-    restart: unless-stopped
     ports:
       - ${PLEX_LOCAL_PORT}:32400/tcp
       - 8324:8324/tcp
@@ -720,12 +708,11 @@ https://haugene.github.io/docker-transmission-openvpn/
 ** Jellyfin
 #+begin_src yaml
   jellyfin:
+    <<: *service_default
     image: jellyfin/jellyfin:${JELLYFIN_VERSION}
     container_name: jellyfin
     hostname: jellyfin
     user: ${UID}:${GID}
-    tty: true # enable colorized logs
-    restart: unless-stopped
     ports:
       - ${JELLYFIN_LOCAL_PORT}:8096/tcp
     volumes:
@@ -745,10 +732,9 @@ https://haugene.github.io/docker-transmission-openvpn/
 ** Anki
 #+begin_src yaml
   anki:
+    <<: *service_default
     image: kuklinistvan/anki-sync-server:${ANKI_VERSION}
     container_name: anki
-    tty: true # enable colorized logs
-    restart: unless-stopped
     volumes:
       - /home/docker/anki:/app/data
     environment:
@@ -763,10 +749,9 @@ https://haugene.github.io/docker-transmission-openvpn/
 ** Archi Steam Farm
 #+begin_src yaml
   asf:
+    <<: *service_default
     image: justarchi/archisteamfarm:${ASF_VERSION}
     container_name: asf
-    tty: true # enable colorized logs
-    restart: unless-stopped
     volumes:
       - /home/docker/archi-steam-farm:/app/config
     environment:
@@ -782,10 +767,9 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** App
 #+begin_src yaml
   webtrees:
+    <<: *service_default
     image: nathanvaughn/webtrees:${WEBTREES_VERSION}
     container_name: webtrees
-    tty: true # enable colorized logs
-    restart: unless-stopped
     depends_on:
       - webtrees-db
     volumes:
@@ -827,10 +811,9 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** Database
 #+begin_src yaml
   webtrees-db:
+    <<: *service_default
     image: mariadb
     container_name: webtrees-db
-    tty: true # enable colorized logs
-    restart: unless-stopped
     command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     volumes:
       - /home/docker/webtrees/db:/var/lib/mysql
@@ -851,10 +834,9 @@ https://haugene.github.io/docker-transmission-openvpn/
 ** DigiKam DB
 #+begin_src yaml
   digikam-db:
+    <<: *service_default
     image: mariadb
     container_name: digikam-db
-    tty: true # enable colorized logs
-    restart: unless-stopped
     ports:
       - ${DIGIKAM_PORT}:3306
     command: --max_allowed_packet=128M --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
