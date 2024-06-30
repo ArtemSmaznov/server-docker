@@ -138,7 +138,7 @@ services:
 ** DD Client
 #+begin_src yaml
   ddclient:
-    image: lscr.io/linuxserver/ddclient:latest
+    image: lscr.io/linuxserver/ddclient:${DD_VERSION}
     container_name: ddclient
     hostname: ddclient
     tty: true
