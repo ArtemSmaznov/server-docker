@@ -442,7 +442,7 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** App
 #+begin_src yaml
   hass:
-    image: ghcr.io/home-assistant/home-assistant:stable
+    image: ghcr.io/home-assistant/home-assistant:${HOME_ASSISTANT_VERSION}
     container_name: home-assistant
     tty: true # enable colorized logs
     privileged: true
@@ -467,7 +467,7 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** Z-Wave JS UI
 #+begin_src yaml
   zwave-js-ui:
-    image: zwavejs/zwave-js-ui:latest
+    image: zwavejs/zwave-js-ui:${ZWAVE_JS_VERSION}
     container_name: zwave-js-ui
     tty: true # enable colorized logs
     restart: unless-stopped
@@ -497,7 +497,7 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** Wyoming Piper
 #+begin_src yaml
   piper:
-    image: rhasspy/wyoming-piper
+    image: rhasspy/wyoming-piper:${WYOMING_PIPER_VERSION}
     container_name: piper
     tty: true # enable colorized logs
     restart: unless-stopped
@@ -515,7 +515,7 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** Wyoming Whisper
 #+begin_src yaml
   whisper:
-    image: rhasspy/wyoming-whisper
+    image: rhasspy/wyoming-whisper:${WYOMING_WHISPER_VERSION}
     container_name: whisper
     tty: true # enable colorized logs
     restart: unless-stopped
@@ -533,7 +533,7 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** Wyoming Open Wake Word
 #+begin_src yaml
   openwakeword:
-    image: rhasspy/wyoming-openwakeword
+    image: rhasspy/wyoming-openwakeword:${WYOMING_OPENWAKEWORD_VERSION}
     container_name: openwakeword
     tty: true # enable colorized logs
     restart: unless-stopped
