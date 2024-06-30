@@ -480,7 +480,7 @@ services:
       - hass
 
   anki:
-    image: kuklinistvan/anki-sync-server:latest
+    image: kuklinistvan/anki-sync-server:${ANKI_VERSION}
     container_name: anki
     tty: true # enable colorized logs
     restart: unless-stopped
