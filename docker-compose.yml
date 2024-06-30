@@ -58,7 +58,7 @@ services:
       - proxy-tier
 
   acme:
-    image: nginxproxy/acme-companion
+    image: nginxproxy/acme-companion:${ACME_VERSION}
     container_name: acme
     tty: true # enable colorized logs
     restart: always
