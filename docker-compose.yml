@@ -108,7 +108,7 @@ services:
       - proxy-tier
 
   transmission:
-    image: haugene/transmission-openvpn
+    image: haugene/transmission-openvpn:${TRANSMISSION_VERSION}
     container_name: transmission
     tty: true # enable colorized logs
     restart: unless-stopped
