@@ -163,6 +163,7 @@ services:
       - nextcloud-redis
     volumes:
       - /home/docker/nextcloud/app:/var/www/html
+      - /home/docker/nextcloud/opcache-recommended.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini
       - /exosx20/media/music:/var/www/html/data/artem/files/music
       - /exosx20/media/pictures:/var/www/html/data/artem/files/pictures
       - type: tmpfs
