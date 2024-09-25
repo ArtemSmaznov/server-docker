@@ -518,6 +518,8 @@ https://haugene.github.io/docker-transmission-openvpn/
 #+end_src
 
 *** Wyoming Whisper
+speech-to-text
+
 #+begin_src yaml
   whisper:
     <<: *service_default
@@ -535,6 +537,8 @@ https://haugene.github.io/docker-transmission-openvpn/
 #+end_src
 
 *** Wyoming Piper
+text-to-speech
+
 #+begin_src yaml
   piper:
     <<: *service_default
@@ -552,6 +556,8 @@ https://haugene.github.io/docker-transmission-openvpn/
 #+end_src
 
 *** Wyoming Open Wake Word
+wake word detection
+
 #+begin_src yaml
   openwakeword:
     <<: *service_default
