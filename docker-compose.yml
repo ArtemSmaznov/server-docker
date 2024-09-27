@@ -522,7 +522,7 @@ services:
     ports:
       - ${CALIBRE_WEB_LOCAL_PORT}:8083/tcp
     volumes:
-      - /home/docker/calibre:/config
+      - /home/docker/calibre-web:/config
       - /exosx20/media/books:/books
     environment:
       # proxy
@@ -549,6 +549,7 @@ services:
       - ${CALIBRE_VNC_LOCAL_PORT}:8181/tcp
       - ${CALIBRE_LOCAL_PORT}:8081/tcp
     volumes:
+      - /home/docker/calibre:/config
       - /exosx20/media/books:/books
     environment:
       # app
