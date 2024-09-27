@@ -27,6 +27,7 @@
   - [[#immich][Immich]]
   - [[#plex][Plex]]
   - [[#jellyfin][Jellyfin]]
+  - [[#calibre-web][Calibre Web]]
   - [[#web-trees][Web Trees]]
   - [[#anki][Anki]]
   - [[#archi-steam-farm][Archi Steam Farm]]
@@ -771,6 +772,33 @@ wake word detection
     networks:
       - proxy-tier
       - hass
+#+end_src
+** Calibre Web
+#+begin_src yaml
+  calibre:
+    <<: *service_default
+    image: lscr.io/linuxserver/calibre-web:${CALIBRE_VERSION}
+    container_name: calibre-web
+    hostname: calibre-web
+    ports:
+      - ${CALIBRE_LOCAL_PORT}:8083/tcp
+    volumes:
+      - /home/docker/calibre/config:/config
+      - /exosx20/media/books:/books
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${CALIBRE_HOST}
+      VIRTUAL_PORT: 8083
+      LETSENCRYPT_HOST: ${CALIBRE_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      PUID: ${UID}
+      PGID: ${GID}
+      TZ: ${TIME_ZONE}
+      DOCKER_MODS: linuxserver/mods:universal-calibre # optional & x86-64 only Adds the ability to perform ebook conversion
+    networks:
+      - proxy-tier
 #+end_src
 
 ** Web Trees

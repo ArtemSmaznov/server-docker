@@ -513,6 +513,31 @@ services:
       - proxy-tier
       - hass
 
+  calibre:
+    <<: *service_default
+    image: lscr.io/linuxserver/calibre-web:${CALIBRE_VERSION}
+    container_name: calibre-web
+    hostname: calibre-web
+    ports:
+      - ${CALIBRE_LOCAL_PORT}:8083/tcp
+    volumes:
+      - /home/docker/calibre/config:/config
+      - /exosx20/media/books:/books
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${CALIBRE_HOST}
+      VIRTUAL_PORT: 8083
+      LETSENCRYPT_HOST: ${CALIBRE_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      PUID: ${UID}
+      PGID: ${GID}
+      TZ: ${TIME_ZONE}
+      DOCKER_MODS: linuxserver/mods:universal-calibre # optional & x86-64 only Adds the ability to perform ebook conversion
+    networks:
+      - proxy-tier
+
   webtrees:
     <<: *service_default
     image: nathanvaughn/webtrees:${WEBTREES_VERSION}
