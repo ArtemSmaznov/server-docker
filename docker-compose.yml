@@ -513,36 +513,6 @@ services:
       - proxy-tier
       - hass
 
-  anki:
-    <<: *service_default
-    image: kuklinistvan/anki-sync-server:${ANKI_VERSION}
-    container_name: anki
-    volumes:
-      - /home/docker/anki:/app/data
-    environment:
-      # proxy
-      VIRTUAL_HOST: ${ANKI_HOST}
-      VIRTUAL_PORT: 27701
-      LETSENCRYPT_HOST: ${ANKI_HOST}
-      LETSENCRYPT_EMAIL: ${MY_EMAIL}
-    networks:
-      - proxy-tier
-
-  asf:
-    <<: *service_default
-    image: justarchi/archisteamfarm:${ASF_VERSION}
-    container_name: asf
-    volumes:
-      - /home/docker/archi-steam-farm:/app/config
-    environment:
-      # proxy
-      VIRTUAL_HOST: ${ASF_HOST}
-      VIRTUAL_PORT: 1242
-      LETSENCRYPT_HOST: ${ASF_HOST}
-      LETSENCRYPT_EMAIL: ${MY_EMAIL}
-    networks:
-      - proxy-tier
-
   webtrees:
     <<: *service_default
     image: nathanvaughn/webtrees:${WEBTREES_VERSION}
@@ -605,6 +575,36 @@ services:
       - webtrees_db_root_password
     networks:
       - webtrees
+
+  anki:
+    <<: *service_default
+    image: kuklinistvan/anki-sync-server:${ANKI_VERSION}
+    container_name: anki
+    volumes:
+      - /home/docker/anki:/app/data
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${ANKI_HOST}
+      VIRTUAL_PORT: 27701
+      LETSENCRYPT_HOST: ${ANKI_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+    networks:
+      - proxy-tier
+
+  asf:
+    <<: *service_default
+    image: justarchi/archisteamfarm:${ASF_VERSION}
+    container_name: asf
+    volumes:
+      - /home/docker/archi-steam-farm:/app/config
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${ASF_HOST}
+      VIRTUAL_PORT: 1242
+      LETSENCRYPT_HOST: ${ASF_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+    networks:
+      - proxy-tier
 
   digikam-db:
     <<: *service_default
