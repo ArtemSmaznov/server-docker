@@ -27,7 +27,7 @@
   - [[#immich][Immich]]
   - [[#plex][Plex]]
   - [[#jellyfin][Jellyfin]]
-  - [[#calibre-web][Calibre Web]]
+  - [[#calibre][Calibre]]
   - [[#web-trees][Web Trees]]
   - [[#anki][Anki]]
   - [[#archi-steam-farm][Archi Steam Farm]]
@@ -62,6 +62,7 @@ networks:
         - subnet: 172.11.0.0/24
   nextcloud:
   immich:
+  calibre:
   vpn:
   grafana:
   webtrees:
@@ -773,23 +774,24 @@ wake word detection
       - proxy-tier
       - hass
 #+end_src
-** Calibre Web
+** Calibre
+*** Calibre Web
 #+begin_src yaml
-  calibre:
+  calibre-web:
     <<: *service_default
-    image: lscr.io/linuxserver/calibre-web:${CALIBRE_VERSION}
+    image: lscr.io/linuxserver/calibre-web:${CALIBRE_WEB_VERSION}
     container_name: calibre-web
     hostname: calibre-web
     ports:
-      - ${CALIBRE_LOCAL_PORT}:8083/tcp
+      - ${CALIBRE_WEB_LOCAL_PORT}:8083/tcp
     volumes:
       - /home/docker/calibre:/config
       - /exosx20/media/books:/books
     environment:
       # proxy
-      VIRTUAL_HOST: ${CALIBRE_HOST}
+      VIRTUAL_HOST: ${CALIBRE_WEB_HOST}
       VIRTUAL_PORT: 8083
-      LETSENCRYPT_HOST: ${CALIBRE_HOST}
+      LETSENCRYPT_HOST: ${CALIBRE_WEB_HOST}
       LETSENCRYPT_EMAIL: ${MY_EMAIL}
 
       # app
@@ -798,6 +800,29 @@ wake word detection
       TZ: ${TIME_ZONE}
       DOCKER_MODS: linuxserver/mods:universal-calibre # optional & x86-64 only Adds the ability to perform ebook conversion
     networks:
+      - calibre
+      - proxy-tier
+#+end_src
+
+*** Calibre
+#+begin_src yaml
+  calibre:
+    <<: *service_default
+    image: lscr.io/linuxserver/calibre:${CALIBRE_VERSION}
+    container_name: calibre
+    hostname: calibre
+    ports:
+      - ${CALIBRE_VNC_LOCAL_PORT}:8181/tcp
+      - ${CALIBRE_LOCAL_PORT}:8081/tcp
+    volumes:
+      - /exosx20/media/books:/books
+    environment:
+      # app
+      PUID: ${UID}
+      PGID: ${GID}
+      TZ: ${TIME_ZONE}
+    networks:
+      - calibre
       - proxy-tier
 #+end_src
 
