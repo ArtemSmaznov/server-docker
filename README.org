@@ -733,6 +733,7 @@ wake word detection
       - /home/docker/plex/config:/config
       - /home/docker/plex/transcode:/transcode
       - /exosx20/media/videos:/data/videos
+      - /exosx20/media/music:/data/music
     environment:
       # proxy
       VIRTUAL_HOST: ${PLEX_HOST}
