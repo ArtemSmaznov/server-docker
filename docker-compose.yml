@@ -9,6 +9,7 @@ networks:
         - subnet: 172.11.0.0/24
   nextcloud:
   immich:
+  calibre:
   vpn:
   grafana:
   webtrees:
@@ -475,6 +476,7 @@ services:
       - /home/docker/plex/config:/config
       - /home/docker/plex/transcode:/transcode
       - /exosx20/media/videos:/data/videos
+      - /exosx20/media/music:/data/music
     environment:
       # proxy
       VIRTUAL_HOST: ${PLEX_HOST}
@@ -512,6 +514,52 @@ services:
     networks:
       - proxy-tier
       - hass
+
+  calibre-web:
+    <<: *service_default
+    image: lscr.io/linuxserver/calibre-web:${CALIBRE_WEB_VERSION}
+    container_name: calibre-web
+    hostname: calibre-web
+    ports:
+      - ${CALIBRE_WEB_LOCAL_PORT}:8083/tcp
+    volumes:
+      - /home/docker/calibre-web:/config
+      - /exosx20/media/books:/books
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${CALIBRE_WEB_HOST}
+      VIRTUAL_PORT: 8083
+      LETSENCRYPT_HOST: ${CALIBRE_WEB_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      PUID: ${UID}
+      PGID: ${GID}
+      TZ: ${TIME_ZONE}
+      DOCKER_MODS: linuxserver/mods:universal-calibre # optional & x86-64 only Adds the ability to perform ebook conversion
+    networks:
+      - calibre
+      - proxy-tier
+
+  calibre:
+    <<: *service_default
+    image: lscr.io/linuxserver/calibre:${CALIBRE_VERSION}
+    container_name: calibre
+    hostname: calibre
+    ports:
+      - ${CALIBRE_VNC_LOCAL_PORT}:8181/tcp
+      - ${CALIBRE_LOCAL_PORT}:8081/tcp
+    volumes:
+      - /home/docker/calibre:/config
+      - /exosx20/media/books:/books
+    environment:
+      # app
+      PUID: ${UID}
+      PGID: ${GID}
+      TZ: ${TIME_ZONE}
+    networks:
+      - calibre
+      - proxy-tier
 
   webtrees:
     <<: *service_default
