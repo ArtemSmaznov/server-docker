@@ -515,21 +515,47 @@ services:
       - proxy-tier
       - hass
 
-  calibre-web:
+  calibre-web-books:
     <<: *service_default
-    image: lscr.io/linuxserver/calibre-web:${CALIBRE_WEB_VERSION}
-    container_name: calibre-web
-    hostname: calibre-web
+    image: lscr.io/linuxserver/calibre-web:${CALIBRE_VERSION}
+    container_name: calibre-web-books
+    hostname: calibre-web-books
     ports:
-      - ${CALIBRE_WEB_LOCAL_PORT}:8083/tcp
+      - ${CALIBRE_BOOKS_LOCAL_PORT}:8083/tcp
     volumes:
-      - /home/docker/calibre-web:/config
+      - /home/docker/calibre/books:/config
       - /exosx20/media/books:/books
     environment:
       # proxy
-      VIRTUAL_HOST: ${CALIBRE_WEB_HOST}
+      VIRTUAL_HOST: ${CALIBRE_BOOKS_HOST}
       VIRTUAL_PORT: 8083
-      LETSENCRYPT_HOST: ${CALIBRE_WEB_HOST}
+      LETSENCRYPT_HOST: ${CALIBRE_BOOKS_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      PUID: ${UID}
+      PGID: ${GID}
+      TZ: ${TIME_ZONE}
+      DOCKER_MODS: linuxserver/mods:universal-calibre # optional & x86-64 only Adds the ability to perform ebook conversion
+    networks:
+      - calibre
+      - proxy-tier
+
+  calibre-web-manuals:
+    <<: *service_default
+    image: lscr.io/linuxserver/calibre-web:${CALIBRE_VERSION}
+    container_name: calibre-web-manuals
+    hostname: calibre-web-manuals
+    ports:
+      - ${CALIBRE_MANUALS_LOCAL_PORT}:8083/tcp
+    volumes:
+      - /home/docker/calibre/manuals:/config
+      - /exosx20/media/manuals:/books
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${CALIBRE_MANUALS_HOST}
+      VIRTUAL_PORT: 8083
+      LETSENCRYPT_HOST: ${CALIBRE_MANUALS_HOST}
       LETSENCRYPT_EMAIL: ${MY_EMAIL}
 
       # app
@@ -543,14 +569,14 @@ services:
 
   calibre:
     <<: *service_default
-    image: lscr.io/linuxserver/calibre:${CALIBRE_VERSION}
+    image: lscr.io/linuxserver/calibre:${CALIBRE_MNG_VERSION}
     container_name: calibre
     hostname: calibre
     ports:
-      - ${CALIBRE_VNC_LOCAL_PORT}:8181/tcp
-      - ${CALIBRE_LOCAL_PORT}:8081/tcp
+      - ${CALIBRE_MNG_VNC_LOCAL_PORT}:8181/tcp
+      - ${CALIBRE_MNG_LOCAL_PORT}:8081/tcp
     volumes:
-      - /home/docker/calibre:/config
+      - /home/docker/calibre/manager.books:/config
       - /exosx20/media/books:/books
     environment:
       # app
