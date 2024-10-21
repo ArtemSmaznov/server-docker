@@ -401,7 +401,7 @@ services:
     environment:
       # proxy
       VIRTUAL_HOST: ${IMMICH_HOST}
-      VIRTUAL_PORT: 3001
+      VIRTUAL_PORT: 2283
       LETSENCRYPT_HOST: ${IMMICH_HOST}
       LETSENCRYPT_EMAIL: ${MY_EMAIL}
 
