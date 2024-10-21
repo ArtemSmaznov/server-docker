@@ -638,7 +638,7 @@ wake word detection
       - immich-db
       - immich-redis
     ports:
-      - ${IMMICH_LOCAL_PORT}:3001
+      - ${IMMICH_LOCAL_PORT}:2283
     volumes:
       - /exosx20/immich:/usr/src/app/upload
       - /exosx20/media/photos:/usr/src/app/external
