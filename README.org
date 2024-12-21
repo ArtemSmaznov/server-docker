@@ -389,7 +389,10 @@ https://haugene.github.io/docker-transmission-openvpn/
 *** Server
 #+begin_src yaml
   nextcloud-server:
-    build: ./nextcloud/server
+    build:
+      context: ./nextcloud/server
+      args:
+        NEXTCLOUD_VERSION: ${NEXTCLOUD_VERSION}
     container_name: nextcloud-server
     hostname: nextcloud
     tty: true # enable colorized logs
