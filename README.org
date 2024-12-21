@@ -643,8 +643,7 @@ wake word detection
     ports:
       - ${IMMICH_LOCAL_PORT}:2283
     volumes:
-      - /exosx20/immich:/usr/src/app/upload
-      - /exosx20/media/photos:/usr/src/app/external
+      - /home/docker/backups/immich:/usr/src/app/upload
       - /etc/localtime:/etc/localtime:ro
     environment:
       # proxy
