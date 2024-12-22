@@ -391,7 +391,7 @@ services:
     #   file: hwaccel.ml.yml
     #   service: cpu # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference - use the `-wsl` version for WSL2 where applicable
     volumes:
-      - /exosx20/.cache/immich:/cache
+      - /home/docker/immich/cache:/cache
     networks:
       - immich
 
