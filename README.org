@@ -310,6 +310,9 @@ Still needs work on opening the peer port
 #+end_src
 
 ** Transmission
+:PROPERTIES:
+:header-args: :tangle no
+:END:
 https://haugene.github.io/docker-transmission-openvpn/
 #+begin_src yaml
   transmission:
@@ -716,6 +719,9 @@ wake word detection
 #+end_src
 
 ** Plex
+:PROPERTIES:
+:header-args: :tangle no
+:END:
 #+begin_src yaml
   plex:
     <<: *service_default
@@ -754,6 +760,9 @@ wake word detection
 #+end_src
 
 ** Jellyfin
+:PROPERTIES:
+:header-args: :tangle no
+:END:
 #+begin_src yaml
   jellyfin:
     <<: *service_default
@@ -778,6 +787,9 @@ wake word detection
       - hass
 #+end_src
 ** Calibre
+:PROPERTIES:
+:header-args: :tangle no
+:END:
 *** Calibre Web - Books
 #+begin_src yaml
   calibre-web-books:
