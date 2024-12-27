@@ -284,7 +284,7 @@ Still needs work on opening the peer port
       - /srv/config/transmission/config:/config
       - /srv/config/transmission/watch:/watch
       - /srv/config/transmission/downloads:/downloads
-      - /exosx20/media/videos:/downloads/videos
+      - /srv/zmedia/videos:/downloads/videos
     environment:
       # proxy
       VIRTUAL_HOST: ${TRANSMISSION_HOST}
