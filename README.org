@@ -643,7 +643,7 @@ wake word detection
     ports:
       - ${IMMICH_LOCAL_PORT}:2283
     volumes:
-      - /srv/config/backups/immich:/usr/src/app/upload
+      - /srv/zmedia/immich:/usr/src/app/upload
       - /etc/localtime:/etc/localtime:ro
     environment:
       # proxy
