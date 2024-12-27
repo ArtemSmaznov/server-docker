@@ -121,6 +121,8 @@ services:
     container_name: transmission
     cap_add:
       - NET_ADMIN
+    devices:
+      - /dev/net/tun
     ports:
       - ${TRANSMISSION_WEBUI_PORT}:9091/tcp
     volumes:
