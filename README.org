@@ -716,9 +716,6 @@ wake word detection
 #+end_src
 
 ** Plex
-:PROPERTIES:
-:header-args: :tangle no
-:END:
 #+begin_src yaml
   plex:
     <<: *service_default
@@ -737,8 +734,8 @@ wake word detection
     volumes:
       - /srv/config/plex/config:/config
       - /srv/config/plex/transcode:/transcode
-      - /exosx20/media/videos:/data/videos
-      - /exosx20/media/music:/data/music
+      - /srv/zmedia/videos:/data/videos
+      - /srv/zmedia/music:/data/music
     environment:
       # proxy
       VIRTUAL_HOST: ${PLEX_HOST}
@@ -757,9 +754,6 @@ wake word detection
 #+end_src
 
 ** Jellyfin
-:PROPERTIES:
-:header-args: :tangle no
-:END:
 #+begin_src yaml
   jellyfin:
     <<: *service_default
@@ -772,7 +766,7 @@ wake word detection
     volumes:
       - /srv/config/jellyfin/config:/config
       - /srv/config/jellyfin/cache:/cache
-      - /exosx20/media/videos:/media/videos:ro
+      - /srv/zmedia/videos:/media/videos:ro
     environment:
       # proxy
       VIRTUAL_HOST: ${JELLYFIN_HOST}
