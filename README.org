@@ -778,9 +778,6 @@ wake word detection
       - hass
 #+end_src
 ** Calibre
-:PROPERTIES:
-:header-args: :tangle no
-:END:
 *** Calibre Web - Books
 #+begin_src yaml
   calibre-web-books:
@@ -792,7 +789,7 @@ wake word detection
       - ${CALIBRE_BOOKS_LOCAL_PORT}:8083/tcp
     volumes:
       - /srv/config/calibre/books:/config
-      - /exosx20/media/books:/books
+      - /srv/zmedia/documents/books:/books
     environment:
       # proxy
       VIRTUAL_HOST: ${CALIBRE_BOOKS_HOST}
@@ -821,7 +818,7 @@ wake word detection
       - ${CALIBRE_MANUALS_LOCAL_PORT}:8083/tcp
     volumes:
       - /srv/config/calibre/manuals:/config
-      - /exosx20/media/manuals:/books
+      - /srv/zmedia/documents/manuals:/books
     environment:
       # proxy
       VIRTUAL_HOST: ${CALIBRE_MANUALS_HOST}
@@ -851,7 +848,7 @@ wake word detection
       - ${CALIBRE_MNG_LOCAL_PORT}:8081/tcp
     volumes:
       - /srv/config/calibre/manager.books:/config
-      - /exosx20/media/books:/books
+      - /srv/zmedia/documents/books:/books
     environment:
       # app
       PUID: ${UID}

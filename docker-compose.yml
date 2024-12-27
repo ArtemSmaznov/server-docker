@@ -517,6 +517,78 @@ services:
       - proxy-tier
       - hass
 
+  calibre-web-books:
+    <<: *service_default
+    image: lscr.io/linuxserver/calibre-web:${CALIBRE_VERSION}
+    container_name: calibre-web-books
+    hostname: calibre-web-books
+    ports:
+      - ${CALIBRE_BOOKS_LOCAL_PORT}:8083/tcp
+    volumes:
+      - /srv/config/calibre/books:/config
+      - /srv/zmedia/documents/books:/books
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${CALIBRE_BOOKS_HOST}
+      VIRTUAL_PORT: 8083
+      LETSENCRYPT_HOST: ${CALIBRE_BOOKS_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      PUID: ${UID}
+      PGID: ${GID}
+      TZ: ${TIME_ZONE}
+      DOCKER_MODS: linuxserver/mods:universal-calibre # optional & x86-64 only Adds the ability to perform ebook conversion
+    networks:
+      - calibre
+      - proxy-tier
+
+  calibre-web-manuals:
+    <<: *service_default
+    image: lscr.io/linuxserver/calibre-web:${CALIBRE_VERSION}
+    container_name: calibre-web-manuals
+    hostname: calibre-web-manuals
+    ports:
+      - ${CALIBRE_MANUALS_LOCAL_PORT}:8083/tcp
+    volumes:
+      - /srv/config/calibre/manuals:/config
+      - /srv/zmedia/documents/manuals:/books
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${CALIBRE_MANUALS_HOST}
+      VIRTUAL_PORT: 8083
+      LETSENCRYPT_HOST: ${CALIBRE_MANUALS_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      PUID: ${UID}
+      PGID: ${GID}
+      TZ: ${TIME_ZONE}
+      DOCKER_MODS: linuxserver/mods:universal-calibre # optional & x86-64 only Adds the ability to perform ebook conversion
+    networks:
+      - calibre
+      - proxy-tier
+
+  calibre:
+    <<: *service_default
+    image: lscr.io/linuxserver/calibre:${CALIBRE_MNG_VERSION}
+    container_name: calibre
+    hostname: calibre
+    ports:
+      - ${CALIBRE_MNG_VNC_LOCAL_PORT}:8181/tcp
+      - ${CALIBRE_MNG_LOCAL_PORT}:8081/tcp
+    volumes:
+      - /srv/config/calibre/manager.books:/config
+      - /srv/zmedia/documents/books:/books
+    environment:
+      # app
+      PUID: ${UID}
+      PGID: ${GID}
+      TZ: ${TIME_ZONE}
+    networks:
+      - calibre
+      - proxy-tier
+
   webtrees:
     <<: *service_default
     image: nathanvaughn/webtrees:${WEBTREES_VERSION}
