@@ -366,8 +366,8 @@ https://haugene.github.io/docker-transmission-openvpn/
     volumes:
       - /srv/config/nextcloud/app:/var/www/html
       # - /srv/config/nextcloud/opcache-recommended.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini
-      # - /exosx20/media/music:/var/www/html/data/artem/files/music
-      # - /exosx20/media/pictures:/var/www/html/data/artem/files/pictures
+      - /srv/zmedia/music:/var/www/html/data/artem/files/music
+      - /srv/zmedia/pictures:/var/www/html/data/artem/files/pictures
       - type: tmpfs
         target: /tmp:exec
     environment:
