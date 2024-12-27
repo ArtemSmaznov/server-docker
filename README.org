@@ -119,9 +119,9 @@ services:
       - 80:80
       - 443:443
     volumes:
-      - /home/docker/proxy/certs:/etc/nginx/certs:ro
-      - /home/docker/proxy/vhost.d:/etc/nginx/vhost.d
-      - /home/docker/proxy/html:/usr/share/nginx/html
+      - /srv/config/proxy/certs:/etc/nginx/certs:ro
+      - /srv/config/proxy/vhost.d:/etc/nginx/vhost.d
+      - /srv/config/proxy/html:/usr/share/nginx/html
       - /var/run/docker.sock:/tmp/docker.sock:ro
     labels:
       com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: 'true'
@@ -139,10 +139,10 @@ services:
     depends_on:
       - proxy
     volumes:
-      - /home/docker/proxy/certs:/etc/nginx/certs
-      - /home/docker/proxy/acme:/etc/acme.sh
-      - /home/docker/proxy/vhost.d:/etc/nginx/vhost.d
-      - /home/docker/proxy/html:/usr/share/nginx/html
+      - /srv/config/proxy/certs:/etc/nginx/certs
+      - /srv/config/proxy/acme:/etc/acme.sh
+      - /srv/config/proxy/vhost.d:/etc/nginx/vhost.d
+      - /srv/config/proxy/html:/usr/share/nginx/html
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       # app
@@ -159,7 +159,7 @@ services:
     container_name: ddclient
     hostname: ddclient
     volumes:
-      - /home/docker/dns:/config
+      - /srv/config/dns:/config
     environment:
       # app
       PUID: ${UID}
@@ -174,7 +174,7 @@ services:
     image: linuxserver/heimdall:${HOME_VERSION}
     container_name: home
     volumes:
-      - /home/docker/heimdall:/config
+      - /srv/config/heimdall:/config
     environment:
       # proxy
       VIRTUAL_HOST: ${HOME_HOST}
@@ -213,7 +213,7 @@ services:
       #- ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}
       #- ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}/udp
     volumes:
-      - /home/docker/wireguard:/config
+      - /srv/config/wireguard:/config
       - /lib/modules:/lib/modules
     environment:
       # proxy
@@ -246,8 +246,8 @@ services:
     cap_add:
       - NET_ADMIN
     volumes:
-      - /home/docker/wireguard-ui:/app/db
-      - /home/docker/wireguard:/etc/wireguard
+      - /srv/config/wireguard-ui:/app/db
+      - /srv/config/wireguard:/etc/wireguard
     environment:
       # app
       SENDGRID_API_KEY:
@@ -281,9 +281,9 @@ Still needs work on opening the peer port
       - ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}
       - ${TRANSMISSION_PEER_PORT}:${TRANSMISSION_PEER_PORT}/udp
     volumes:
-      - /home/docker/transmission/config:/config
-      - /home/docker/transmission/watch:/watch
-      - /home/docker/transmission/downloads:/downloads
+      - /srv/config/transmission/config:/config
+      - /srv/config/transmission/watch:/watch
+      - /srv/config/transmission/downloads:/downloads
       - /exosx20/media/videos:/downloads/videos
     environment:
       # proxy
@@ -321,7 +321,7 @@ https://haugene.github.io/docker-transmission-openvpn/
     ports:
       - ${TRANSMISSION_WEBUI_PORT}:9091/tcp
     volumes:
-      - /home/docker/transmission/config:/config/transmission-home
+      - /srv/config/transmission/config:/config/transmission-home
       - /srv/zmedia/downloads/:/downloads
       - /srv/zmedia/downloads/.watch:/watch
       - /srv/zmedia/videos:/downloads/videos
@@ -364,8 +364,8 @@ https://haugene.github.io/docker-transmission-openvpn/
       - nextcloud-db
       - nextcloud-redis
     volumes:
-      - /home/docker/nextcloud/app:/var/www/html
-      # - /home/docker/nextcloud/opcache-recommended.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini
+      - /srv/config/nextcloud/app:/var/www/html
+      # - /srv/config/nextcloud/opcache-recommended.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini
       # - /exosx20/media/music:/var/www/html/data/artem/files/music
       # - /exosx20/media/pictures:/var/www/html/data/artem/files/pictures
       - type: tmpfs
@@ -402,7 +402,7 @@ https://haugene.github.io/docker-transmission-openvpn/
     ports:
       - ${NEXTCLOUD_LOCAL_PORT}:80
     volumes:
-      - /home/docker/nextcloud/app:/var/www/html:ro
+      - /srv/config/nextcloud/app:/var/www/html:ro
     environment:
       # proxy
       VIRTUAL_HOST: ${NEXTCLOUD_HOST}
@@ -426,8 +426,8 @@ https://haugene.github.io/docker-transmission-openvpn/
       - nextcloud-db
       - nextcloud-redis
     volumes:
-      - /home/docker/nextcloud/app:/var/www/html
-      - /home/docker/nextcloud/cron:/var/spool/cron/crontabs
+      - /srv/config/nextcloud/app:/var/www/html
+      - /srv/config/nextcloud/cron:/var/spool/cron/crontabs
     networks:
       - nextcloud
 #+end_src
@@ -440,7 +440,7 @@ https://haugene.github.io/docker-transmission-openvpn/
     container_name: nextcloud-db
     command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     volumes:
-      - /home/docker/nextcloud/db:/var/lib/mysql
+      - /srv/config/nextcloud/db:/var/lib/mysql
     environment:
       # app
       MARIADB_AUTO_UPGRADE: 1
@@ -477,7 +477,7 @@ https://haugene.github.io/docker-transmission-openvpn/
     ports:
       - ${HOME_ASSISTANT_LOCAL_PORT}:8123
     volumes:
-      - /home/docker/home-assistant/config:/config
+      - /srv/config/home-assistant/config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
       # proxy
@@ -502,7 +502,7 @@ https://haugene.github.io/docker-transmission-openvpn/
     ports:
       - ${ZWAVE_JS_LOCAL_PORT}:3000 # port for Z-Wave JS websocket server
     volumes:
-      - /home/docker/home-assistant/zwave:/usr/src/app/store
+      - /srv/config/home-assistant/zwave:/usr/src/app/store
     devices:
       - /dev/serial/by-id/usb-0658_0200-if00:/dev/zwave
     environment:
@@ -535,7 +535,7 @@ speech-to-text
     ports:
       - 10300:10300
     volumes:
-      - /home/docker/home-assistant/wyoming-whisper:/data
+      - /srv/config/home-assistant/wyoming-whisper:/data
     command: --model=distil-small.en --language=en
     networks:
       - hass
@@ -554,7 +554,7 @@ text-to-speech
     ports:
       - 10200:10200
     volumes:
-      - /home/docker/home-assistant/wyoming-piper:/data
+      - /srv/config/home-assistant/wyoming-piper:/data
     command: --voice=en_US-libritts_r-medium
     networks:
       - hass
@@ -588,7 +588,7 @@ wake word detection
     ports:
       - ${INFLUXDB_LOCAL_PORT}:8086
     volumes:
-      - /home/docker/grafana/influxdb:/var/lib/influxdb2
+      - /srv/config/grafana/influxdb:/var/lib/influxdb2
     networks:
       - grafana
       - hass
@@ -604,7 +604,7 @@ wake word detection
     ports:
       - ${GRAFANA_LOCAL_PORT}:3000
     volumes:
-      - /home/docker/grafana/app:/var/lib/grafana
+      - /srv/config/grafana/app:/var/lib/grafana
     environment:
       # proxy
       VIRTUAL_HOST: ${GRAFANA_HOST}
@@ -643,7 +643,7 @@ wake word detection
     ports:
       - ${IMMICH_LOCAL_PORT}:2283
     volumes:
-      - /home/docker/backups/immich:/usr/src/app/upload
+      - /srv/config/backups/immich:/usr/src/app/upload
       - /etc/localtime:/etc/localtime:ro
     environment:
       # proxy
@@ -678,7 +678,7 @@ wake word detection
     #   file: hwaccel.ml.yml
     #   service: cpu # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference - use the `-wsl` version for WSL2 where applicable
     volumes:
-      - /home/docker/immich/cache:/cache
+      - /srv/config/immich/cache:/cache
     networks:
       - immich
 #+end_src
@@ -692,7 +692,7 @@ wake word detection
     hostname: immich-db
     command: ["postgres", "-c" ,"shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
     volumes:
-      - /home/docker/immich/db:/var/lib/postgresql/data
+      - /srv/config/immich/db:/var/lib/postgresql/data
     environment:
       # app
       POSTGRES_DB: ${IMMICH_DB_NAME}
@@ -735,8 +735,8 @@ wake word detection
       - 32413:32413/udp
       - 32414:32414/udp
     volumes:
-      - /home/docker/plex/config:/config
-      - /home/docker/plex/transcode:/transcode
+      - /srv/config/plex/config:/config
+      - /srv/config/plex/transcode:/transcode
       - /exosx20/media/videos:/data/videos
       - /exosx20/media/music:/data/music
     environment:
@@ -770,8 +770,8 @@ wake word detection
     ports:
       - ${JELLYFIN_LOCAL_PORT}:8096/tcp
     volumes:
-      - /home/docker/jellyfin/config:/config
-      - /home/docker/jellyfin/cache:/cache
+      - /srv/config/jellyfin/config:/config
+      - /srv/config/jellyfin/cache:/cache
       - /exosx20/media/videos:/media/videos:ro
     environment:
       # proxy
@@ -797,7 +797,7 @@ wake word detection
     ports:
       - ${CALIBRE_BOOKS_LOCAL_PORT}:8083/tcp
     volumes:
-      - /home/docker/calibre/books:/config
+      - /srv/config/calibre/books:/config
       - /exosx20/media/books:/books
     environment:
       # proxy
@@ -826,7 +826,7 @@ wake word detection
     ports:
       - ${CALIBRE_MANUALS_LOCAL_PORT}:8083/tcp
     volumes:
-      - /home/docker/calibre/manuals:/config
+      - /srv/config/calibre/manuals:/config
       - /exosx20/media/manuals:/books
     environment:
       # proxy
@@ -856,7 +856,7 @@ wake word detection
       - ${CALIBRE_MNG_VNC_LOCAL_PORT}:8181/tcp
       - ${CALIBRE_MNG_LOCAL_PORT}:8081/tcp
     volumes:
-      - /home/docker/calibre/manager.books:/config
+      - /srv/config/calibre/manager.books:/config
       - /exosx20/media/books:/books
     environment:
       # app
@@ -878,8 +878,8 @@ wake word detection
     depends_on:
       - webtrees-db
     volumes:
-      - /home/docker/webtrees/data:/var/www/webtrees/data
-      - /home/docker/webtrees/themes:/var/www/webtrees/modules_v4
+      - /srv/config/webtrees/data:/var/www/webtrees/data
+      - /srv/config/webtrees/themes:/var/www/webtrees/modules_v4
     environment:
       # proxy
       VIRTUAL_HOST: ${WEBTREES_HOST}
@@ -922,7 +922,7 @@ wake word detection
     container_name: webtrees-db
     command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     volumes:
-      - /home/docker/webtrees/db:/var/lib/mysql
+      - /srv/config/webtrees/db:/var/lib/mysql
     environment:
       # app
       MARIADB_AUTO_UPGRADE: 1
@@ -945,7 +945,7 @@ wake word detection
     image: kuklinistvan/anki-sync-server:${ANKI_VERSION}
     container_name: anki
     volumes:
-      - /home/docker/anki:/app/data
+      - /srv/config/anki:/app/data
     environment:
       # proxy
       VIRTUAL_HOST: ${ANKI_HOST}
@@ -963,7 +963,7 @@ wake word detection
     image: justarchi/archisteamfarm:${ASF_VERSION}
     container_name: asf
     volumes:
-      - /home/docker/archi-steam-farm:/app/config
+      - /srv/config/archi-steam-farm:/app/config
     environment:
       # proxy
       VIRTUAL_HOST: ${ASF_HOST}
@@ -984,7 +984,7 @@ wake word detection
       - ${DIGIKAM_PORT}:3306
     command: --max_allowed_packet=128M --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     volumes:
-      - /home/docker/digikam/db:/var/lib/mysql
+      - /srv/config/digikam/db:/var/lib/mysql
     environment:
       # app
       MARIADB_DATABASE: ${DIGIKAM_DB_NAME}
