@@ -115,6 +115,45 @@ services:
     networks:
       - proxy-tier
 
+  transmission:
+    <<: *service_default
+    image: haugene/transmission-openvpn:${TRANSMISSION_VERSION}
+    container_name: transmission
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - ${TRANSMISSION_WEBUI_PORT}:9091/tcp
+    volumes:
+      - /home/docker/transmission/config:/config/transmission-home
+      - /srv/zmedia/downloads/:/downloads
+      - /srv/zmedia/downloads/.watch:/watch
+      - /srv/zmedia/videos:/downloads/videos
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${TRANSMISSION_HOST}
+      VIRTUAL_PORT: ${TRANSMISSION_WEBUI_PORT}
+      LETSENCRYPT_HOST: ${TRANSMISSION_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      LOCAL_NETWORK: 192.168.0.0/16
+      #LOCAL_NETWORK: 172.10.0.0/24
+      TRANSMISSION_DOWNLOAD_DIR: /downloads
+      TRANSMISSION_INCOMPLETE_DIR: /downloads/.incomplete
+      TRANSMISSION_RPC_PORT: ${TRANSMISSION_WEBUI_PORT}
+      PUID: ${UID}
+      PGID: ${GID}
+      TZ: ${TIME_ZONE}
+      HEALTH_CHECK_HOST: archlinux.org
+    env_file:
+      - secrets/vpn.env
+    secrets:
+      - rpc_creds
+      - openvpn_creds
+    networks:
+      - proxy-tier
+      - hass
+
   nextcloud-app:
     build: ./nextcloud/app
     container_name: nextcloud-app

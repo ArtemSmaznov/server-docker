@@ -310,9 +310,6 @@ Still needs work on opening the peer port
 #+end_src
 
 ** Transmission
-:PROPERTIES:
-:header-args: :tangle no
-:END:
 https://haugene.github.io/docker-transmission-openvpn/
 #+begin_src yaml
   transmission:
@@ -325,9 +322,9 @@ https://haugene.github.io/docker-transmission-openvpn/
       - ${TRANSMISSION_WEBUI_PORT}:9091/tcp
     volumes:
       - /home/docker/transmission/config:/config/transmission-home
-      - /exosx20/downloads/:/downloads
-      - /exosx20/downloads/watch:/watch
-      - /exosx20/media/videos:/downloads/videos
+      - /srv/zmedia/downloads/:/downloads
+      - /srv/zmedia/downloads/.watch:/watch
+      - /srv/zmedia/videos:/downloads/videos
     environment:
       # proxy
       VIRTUAL_HOST: ${TRANSMISSION_HOST}
@@ -339,7 +336,7 @@ https://haugene.github.io/docker-transmission-openvpn/
       LOCAL_NETWORK: 192.168.0.0/16
       #LOCAL_NETWORK: 172.10.0.0/24
       TRANSMISSION_DOWNLOAD_DIR: /downloads
-      TRANSMISSION_INCOMPLETE_DIR: /downloads/incomplete
+      TRANSMISSION_INCOMPLETE_DIR: /downloads/.incomplete
       TRANSMISSION_RPC_PORT: ${TRANSMISSION_WEBUI_PORT}
       PUID: ${UID}
       PGID: ${GID}
