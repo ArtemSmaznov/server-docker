@@ -32,6 +32,7 @@
   - [[#anki][Anki]]
   - [[#archi-steam-farm][Archi Steam Farm]]
   - [[#digikam-db][DigiKam DB]]
+  - [[#music][Music]]
 
 * Usage
 Bring server up
@@ -987,4 +988,32 @@ wake word detection
     secrets:
       - digikam_db_password
       - digikam_db_root_password
+#+end_src
+
+** Music
+*** Navidrome
+#+begin_src yaml
+  navidrome:
+    <<: *service_default
+    image: deluan/navidrome:${NAVIDROME_VERSION}
+    container_name: navidrome
+    hostname: navidrome
+    user: ${UID}:${GID}
+    ports:
+      - ${NAVIDROME_LOCAL_PORT}:4533
+    volumes:
+      - /srv/config/navidrome:/data
+      - /srv/zmedia/music:/music:ro
+      - /srv/zmedia/playlists:/playlists
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${NAVIDROME_HOST}
+      VIRTUAL_PORT: 4533
+      LETSENCRYPT_HOST: ${NAVIDROME_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      ND_CONFIGFILE: /data/navidrome.toml
+    networks:
+      - proxy-tier
 #+end_src

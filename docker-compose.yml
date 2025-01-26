@@ -702,3 +702,27 @@ services:
     secrets:
       - digikam_db_password
       - digikam_db_root_password
+
+  navidrome:
+    <<: *service_default
+    image: deluan/navidrome:${NAVIDROME_VERSION}
+    container_name: navidrome
+    hostname: navidrome
+    user: ${UID}:${GID}
+    ports:
+      - ${NAVIDROME_LOCAL_PORT}:4533
+    volumes:
+      - /srv/config/navidrome:/data
+      - /srv/zmedia/music:/music:ro
+      - /srv/zmedia/playlists:/playlists
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${NAVIDROME_HOST}
+      VIRTUAL_PORT: 4533
+      LETSENCRYPT_HOST: ${NAVIDROME_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      ND_CONFIGFILE: /data/navidrome.toml
+    networks:
+      - proxy-tier
