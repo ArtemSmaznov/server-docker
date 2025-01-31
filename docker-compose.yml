@@ -167,7 +167,6 @@ services:
     volumes:
       - /srv/config/nextcloud/app:/var/www/html
       # - /srv/config/nextcloud/opcache-recommended.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini
-      - /srv/zmedia/music:/var/www/html/data/artem/files/music
       - /srv/zmedia/pictures:/var/www/html/data/artem/files/pictures
       - type: tmpfs
         target: /tmp:exec
