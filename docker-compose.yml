@@ -44,6 +44,59 @@ x-default: &service_default
 
 services:
 
+  home:
+    <<: *service_default
+    image: linuxserver/heimdall:${HOME_VERSION}
+    container_name: home
+    volumes:
+      - /srv/config/heimdall:/config
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${HOME_HOST}
+      VIRTUAL_PORT: 443
+      VIRTUAL_PROTO: https
+      LETSENCRYPT_HOST: ${HOME_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      PUID: ${UID}
+      PGID: ${GID}
+      TZ: ${TIME_ZONE}
+    networks:
+      - proxy-tier
+
+  grafana:
+    <<: *service_default
+    image: grafana/grafana-oss:${GRAFANA_VERSION:-preview}
+    container_name: grafana
+    user: '${UID}'
+    ports:
+      - ${GRAFANA_LOCAL_PORT}:3000
+    volumes:
+      - /srv/config/grafana/app:/var/lib/grafana
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${GRAFANA_HOST}
+      VIRTUAL_PORT: 3000
+      LETSENCRYPT_HOST: ${GRAFANA_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      GF_SERVER_ROOT_URL: https://${GRAFANA_HOST}
+      GF_SERVER_DOMAIN: ${MY_DOMAIN}
+
+      GF_DATE_FORMATS_FULL_DATE: ddd, D MMM YYYY - h:mm:ssa
+      GF_DATE_FORMATS_INTERVAL_SECOND: h:mm:ssa
+      GF_DATE_FORMATS_INTERVAL_MINUTE: h:mm
+      GF_DATE_FORMATS_INTERVAL_HOUR: D MMM HH:mm
+      GF_DATE_FORMATS_INTERVAL_DAY: D MMM
+      GF_DATE_FORMATS_INTERVAL_MONTH: MMM YYYY
+      GF_DATE_FORMATS_INTERVAL_YEAR: YYYY
+    networks:
+      - proxy-tier
+      - grafana
+      - hass
+
   proxy:
     build: ./proxy
     container_name: reverse-proxy
@@ -94,27 +147,6 @@ services:
       PGID: ${GID}
       TZ: ${TIME_ZONE}
 
-  home:
-    <<: *service_default
-    image: linuxserver/heimdall:${HOME_VERSION}
-    container_name: home
-    volumes:
-      - /srv/config/heimdall:/config
-    environment:
-      # proxy
-      VIRTUAL_HOST: ${HOME_HOST}
-      VIRTUAL_PORT: 443
-      VIRTUAL_PROTO: https
-      LETSENCRYPT_HOST: ${HOME_HOST}
-      LETSENCRYPT_EMAIL: ${MY_EMAIL}
-
-      # app
-      PUID: ${UID}
-      PGID: ${GID}
-      TZ: ${TIME_ZONE}
-    networks:
-      - proxy-tier
-
   transmission:
     <<: *service_default
     image: haugene/transmission-openvpn:${TRANSMISSION_VERSION}
@@ -155,103 +187,6 @@ services:
     networks:
       - proxy-tier
       - hass
-
-  nextcloud-app:
-    build: ./nextcloud/app
-    container_name: nextcloud-app
-    tty: true # enable colorized logs
-    restart: unless-stopped
-    depends_on:
-      - nextcloud-db
-      - nextcloud-redis
-    volumes:
-      - /srv/config/nextcloud/app:/var/www/html
-      # - /srv/config/nextcloud/opcache-recommended.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini
-      - /srv/zmedia/pictures:/var/www/html/data/artem/files/pictures
-      - type: tmpfs
-        target: /tmp:exec
-    environment:
-      # app
-      PUID: ${UID}
-      PGID: ${UID}
-      MYSQL_HOST: nextcloud-db
-      REDIS_HOST: nextcloud-redis
-      MYSQL_DATABASE: ${NEXTCLOUD_DB_NAME}
-      MYSQL_USER: ${NEXTCLOUD_DB_USER}
-      MYSQL_PASSWORD_FILE: /run/secrets/db_password
-      PHP_MEMORY_LIMIT: 2048M
-    secrets:
-      - db_password
-    networks:
-      - nextcloud
-
-  nextcloud-server:
-    build:
-      context: ./nextcloud/server
-      args:
-        NEXTCLOUD_VERSION: ${NEXTCLOUD_VERSION}
-    container_name: nextcloud-server
-    hostname: nextcloud
-    tty: true # enable colorized logs
-    restart: unless-stopped
-    depends_on:
-      - nextcloud-app
-    ports:
-      - ${NEXTCLOUD_LOCAL_PORT}:80
-    volumes:
-      - /srv/config/nextcloud/app:/var/www/html:ro
-    environment:
-      # proxy
-      VIRTUAL_HOST: ${NEXTCLOUD_HOST}
-      VIRTUAL_PORT: 80
-      LETSENCRYPT_HOST: ${NEXTCLOUD_HOST}
-      LETSENCRYPT_EMAIL: ${MY_EMAIL}
-    networks:
-      - proxy-tier
-      - nextcloud
-      - hass
-
-  nextcloud-cron:
-    <<: *service_default
-    image: nextcloud:fpm-alpine
-    entrypoint: /cron.sh
-    container_name: nextcloud-cron
-    depends_on:
-      - nextcloud-db
-      - nextcloud-redis
-    volumes:
-      - /srv/config/nextcloud/app:/var/www/html
-      - /srv/config/nextcloud/cron:/var/spool/cron/crontabs
-    networks:
-      - nextcloud
-
-  nextcloud-db:
-    <<: *service_default
-    image: mariadb
-    container_name: nextcloud-db
-    command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
-    volumes:
-      - /srv/config/nextcloud/db:/var/lib/mysql
-    environment:
-      # app
-      MARIADB_AUTO_UPGRADE: 1
-      MARIADB_DISABLE_UPGRADE_BACKUP: 1
-      MYSQL_DATABASE: ${NEXTCLOUD_DB_NAME}
-      MYSQL_USER: ${NEXTCLOUD_DB_USER}
-      MYSQL_PASSWORD_FILE: /run/secrets/db_password
-      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
-    secrets:
-      - db_password
-      - db_root_password
-    networks:
-      - nextcloud
-
-  nextcloud-redis:
-    <<: *service_default
-    image: redis:alpine
-    container_name: nextcloud-redis
-    networks:
-      - nextcloud
 
   hass:
     <<: *service_default
@@ -356,167 +291,102 @@ services:
       - grafana
       - hass
 
-  grafana:
-    <<: *service_default
-    image: grafana/grafana-oss:${GRAFANA_VERSION:-preview}
-    container_name: grafana
-    user: '${UID}'
-    ports:
-      - ${GRAFANA_LOCAL_PORT}:3000
+  nextcloud-app:
+    build: ./nextcloud/app
+    container_name: nextcloud-app
+    tty: true # enable colorized logs
+    restart: unless-stopped
+    depends_on:
+      - nextcloud-db
+      - nextcloud-redis
     volumes:
-      - /srv/config/grafana/app:/var/lib/grafana
+      - /srv/config/nextcloud/app:/var/www/html
+      # - /srv/config/nextcloud/opcache-recommended.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini
+      - /srv/zmedia/pictures:/var/www/html/data/artem/files/pictures
+      - type: tmpfs
+        target: /tmp:exec
+    environment:
+      # app
+      PUID: ${UID}
+      PGID: ${UID}
+      MYSQL_HOST: nextcloud-db
+      REDIS_HOST: nextcloud-redis
+      MYSQL_DATABASE: ${NEXTCLOUD_DB_NAME}
+      MYSQL_USER: ${NEXTCLOUD_DB_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      PHP_MEMORY_LIMIT: 2048M
+    secrets:
+      - db_password
+    networks:
+      - nextcloud
+
+  nextcloud-server:
+    build:
+      context: ./nextcloud/server
+      args:
+        NEXTCLOUD_VERSION: ${NEXTCLOUD_VERSION}
+    container_name: nextcloud-server
+    hostname: nextcloud
+    tty: true # enable colorized logs
+    restart: unless-stopped
+    depends_on:
+      - nextcloud-app
+    ports:
+      - ${NEXTCLOUD_LOCAL_PORT}:80
+    volumes:
+      - /srv/config/nextcloud/app:/var/www/html:ro
     environment:
       # proxy
-      VIRTUAL_HOST: ${GRAFANA_HOST}
-      VIRTUAL_PORT: 3000
-      LETSENCRYPT_HOST: ${GRAFANA_HOST}
+      VIRTUAL_HOST: ${NEXTCLOUD_HOST}
+      VIRTUAL_PORT: 80
+      LETSENCRYPT_HOST: ${NEXTCLOUD_HOST}
       LETSENCRYPT_EMAIL: ${MY_EMAIL}
-
-      # app
-      GF_SERVER_ROOT_URL: https://${GRAFANA_HOST}
-      GF_SERVER_DOMAIN: ${MY_DOMAIN}
-
-      GF_DATE_FORMATS_FULL_DATE: ddd, D MMM YYYY - h:mm:ssa
-      GF_DATE_FORMATS_INTERVAL_SECOND: h:mm:ssa
-      GF_DATE_FORMATS_INTERVAL_MINUTE: h:mm
-      GF_DATE_FORMATS_INTERVAL_HOUR: D MMM HH:mm
-      GF_DATE_FORMATS_INTERVAL_DAY: D MMM
-      GF_DATE_FORMATS_INTERVAL_MONTH: MMM YYYY
-      GF_DATE_FORMATS_INTERVAL_YEAR: YYYY
     networks:
       - proxy-tier
-      - grafana
+      - nextcloud
       - hass
 
-  immich:
+  nextcloud-cron:
     <<: *service_default
-    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
-    container_name: immich
-    hostname: immich
+    image: nextcloud:fpm-alpine
+    entrypoint: /cron.sh
+    container_name: nextcloud-cron
     depends_on:
-      - immich-db
-      - immich-redis
-    ports:
-      - ${IMMICH_LOCAL_PORT}:2283
+      - nextcloud-db
+      - nextcloud-redis
     volumes:
-      - /srv/zmedia/immich:/usr/src/app/upload
-      - /etc/localtime:/etc/localtime:ro
-    environment:
-      # proxy
-      VIRTUAL_HOST: ${IMMICH_HOST}
-      VIRTUAL_PORT: 2283
-      LETSENCRYPT_HOST: ${IMMICH_HOST}
-      LETSENCRYPT_EMAIL: ${MY_EMAIL}
-
-      # app
-      DB_DATABASE_NAME: ${IMMICH_DB_NAME}
-      DB_USERNAME: ${IMMICH_DB_USER}
-      DB_PASSWORD: /run/secrets/immich_db_password
-      DB_HOSTNAME: immich-db
-      REDIS_HOSTNAME: immich-redis
-      TZ: ${TIME_ZONE}
-    secrets:
-      - immich_db_password
+      - /srv/config/nextcloud/app:/var/www/html
+      - /srv/config/nextcloud/cron:/var/spool/cron/crontabs
     networks:
-      - proxy-tier
-      - immich
+      - nextcloud
 
-  immich-machine-learning:
+  nextcloud-db:
     <<: *service_default
-    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
-    container_name: immich-machine-learning
-    # For hardware acceleration, add one of -[armnn, cuda, openvino] to the image tag.
-    # Example tag: ${IMMICH_VERSION:-release}-cuda
-    # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/ml-hardware-acceleration
-    #   file: hwaccel.ml.yml
-    #   service: cpu # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference - use the `-wsl` version for WSL2 where applicable
+    image: mariadb
+    container_name: nextcloud-db
+    command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     volumes:
-      - /srv/config/immich/cache:/cache
-    networks:
-      - immich
-
-  immich-db:
-    <<: *service_default
-    image: tensorchord/pgvecto-rs:pg14-v0.2.0
-    container_name: immich-db
-    hostname: immich-db
-    command: ["postgres", "-c" ,"shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
-    volumes:
-      - /srv/config/immich/db:/var/lib/postgresql/data
+      - /srv/config/nextcloud/db:/var/lib/mysql
     environment:
       # app
-      POSTGRES_DB: ${IMMICH_DB_NAME}
-      POSTGRES_USER: ${IMMICH_DB_USER}
-      POSTGRES_PASSWORD: /run/secrets/immich_db_password
-      POSTGRES_INITDB_ARGS: '--data-checksums'
+      MARIADB_AUTO_UPGRADE: 1
+      MARIADB_DISABLE_UPGRADE_BACKUP: 1
+      MYSQL_DATABASE: ${NEXTCLOUD_DB_NAME}
+      MYSQL_USER: ${NEXTCLOUD_DB_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
     secrets:
-      - immich_db_password
+      - db_password
+      - db_root_password
     networks:
-      - immich
+      - nextcloud
 
-  immich-redis:
+  nextcloud-redis:
     <<: *service_default
     image: redis:alpine
-    container_name: immich-redis
+    container_name: nextcloud-redis
     networks:
-      - immich
-
-  plex:
-    <<: *service_default
-    image: plexinc/pms-docker:${PLEX_VERSION}
-    container_name: plex-media-server
-    hostname: plex-media-server
-    ports:
-      - ${PLEX_LOCAL_PORT}:32400/tcp
-      - 8324:8324/tcp
-      - 32469:32469/tcp
-      - 1900:1900/udp
-      - 32410:32410/udp
-      - 32412:32412/udp
-      - 32413:32413/udp
-      - 32414:32414/udp
-    volumes:
-      - /srv/config/plex/config:/config
-      - /srv/config/plex/transcode:/transcode
-      - /srv/zmedia/videos:/data/videos
-      - /srv/zmedia/music:/data/music
-    environment:
-      # proxy
-      VIRTUAL_HOST: ${PLEX_HOST}
-      VIRTUAL_PORT: 32400
-      LETSENCRYPT_HOST: ${PLEX_HOST}
-      LETSENCRYPT_EMAIL: ${MY_EMAIL}
-
-      # app
-      PLEX_CLAIM:
-      PLEX_UID: ${UID}
-      PLEX_GID: ${GID}
-      TZ: ${TIME_ZONE}
-    networks:
-      - proxy-tier
-      - hass
-
-  jellyfin:
-    <<: *service_default
-    image: jellyfin/jellyfin:${JELLYFIN_VERSION}
-    container_name: jellyfin
-    hostname: jellyfin
-    user: ${UID}:${GID}
-    ports:
-      - ${JELLYFIN_LOCAL_PORT}:8096/tcp
-    volumes:
-      - /srv/config/jellyfin/config:/config
-      - /srv/config/jellyfin/cache:/cache
-      - /srv/zmedia/videos:/media/videos:ro
-    environment:
-      # proxy
-      VIRTUAL_HOST: ${JELLYFIN_HOST}
-      VIRTUAL_PORT: 8096
-      LETSENCRYPT_HOST: ${JELLYFIN_HOST}
-      LETSENCRYPT_EMAIL: ${MY_EMAIL}
-    networks:
-      - proxy-tier
-      - hass
+      - nextcloud
 
   calibre-web-books:
     <<: *service_default
@@ -653,55 +523,6 @@ services:
     networks:
       - webtrees
 
-  anki:
-    <<: *service_default
-    image: kuklinistvan/anki-sync-server:${ANKI_VERSION}
-    container_name: anki
-    volumes:
-      - /srv/config/anki:/app/data
-    environment:
-      # proxy
-      VIRTUAL_HOST: ${ANKI_HOST}
-      VIRTUAL_PORT: 27701
-      LETSENCRYPT_HOST: ${ANKI_HOST}
-      LETSENCRYPT_EMAIL: ${MY_EMAIL}
-    networks:
-      - proxy-tier
-
-  asf:
-    <<: *service_default
-    image: justarchi/archisteamfarm:${ASF_VERSION}
-    container_name: asf
-    volumes:
-      - /srv/config/archi-steam-farm:/app/config
-    environment:
-      # proxy
-      VIRTUAL_HOST: ${ASF_HOST}
-      VIRTUAL_PORT: 1242
-      LETSENCRYPT_HOST: ${ASF_HOST}
-      LETSENCRYPT_EMAIL: ${MY_EMAIL}
-    networks:
-      - proxy-tier
-
-  digikam-db:
-    <<: *service_default
-    image: mariadb
-    container_name: digikam-db
-    ports:
-      - ${DIGIKAM_PORT}:3306
-    command: --max_allowed_packet=128M --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
-    volumes:
-      - /srv/config/digikam/db:/var/lib/mysql
-    environment:
-      # app
-      MARIADB_DATABASE: ${DIGIKAM_DB_NAME}
-      MARIADB_USER: ${DIGIKAM_DB_USER}
-      MARIADB_PASSWORD_FILE: /run/secrets/digikam_db_password
-      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/digikam_db_root_password
-    secrets:
-      - digikam_db_password
-      - digikam_db_root_password
-
   navidrome:
     <<: *service_default
     image: deluan/navidrome:${NAVIDROME_VERSION}
@@ -723,5 +544,184 @@ services:
 
       # app
       ND_CONFIGFILE: /data/navidrome.toml
+    networks:
+      - proxy-tier
+
+  immich:
+    <<: *service_default
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    container_name: immich
+    hostname: immich
+    depends_on:
+      - immich-db
+      - immich-redis
+    ports:
+      - ${IMMICH_LOCAL_PORT}:2283
+    volumes:
+      - /srv/zmedia/immich:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${IMMICH_HOST}
+      VIRTUAL_PORT: 2283
+      LETSENCRYPT_HOST: ${IMMICH_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      DB_DATABASE_NAME: ${IMMICH_DB_NAME}
+      DB_USERNAME: ${IMMICH_DB_USER}
+      DB_PASSWORD: /run/secrets/immich_db_password
+      DB_HOSTNAME: immich-db
+      REDIS_HOSTNAME: immich-redis
+      TZ: ${TIME_ZONE}
+    secrets:
+      - immich_db_password
+    networks:
+      - proxy-tier
+      - immich
+
+  immich-machine-learning:
+    <<: *service_default
+    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
+    container_name: immich-machine-learning
+    # For hardware acceleration, add one of -[armnn, cuda, openvino] to the image tag.
+    # Example tag: ${IMMICH_VERSION:-release}-cuda
+    # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/ml-hardware-acceleration
+    #   file: hwaccel.ml.yml
+    #   service: cpu # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference - use the `-wsl` version for WSL2 where applicable
+    volumes:
+      - /srv/config/immich/cache:/cache
+    networks:
+      - immich
+
+  immich-db:
+    <<: *service_default
+    image: tensorchord/pgvecto-rs:pg14-v0.2.0
+    container_name: immich-db
+    hostname: immich-db
+    command: ["postgres", "-c" ,"shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
+    volumes:
+      - /srv/config/immich/db:/var/lib/postgresql/data
+    environment:
+      # app
+      POSTGRES_DB: ${IMMICH_DB_NAME}
+      POSTGRES_USER: ${IMMICH_DB_USER}
+      POSTGRES_PASSWORD: /run/secrets/immich_db_password
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+    secrets:
+      - immich_db_password
+    networks:
+      - immich
+
+  immich-redis:
+    <<: *service_default
+    image: redis:alpine
+    container_name: immich-redis
+    networks:
+      - immich
+
+  digikam-db:
+    <<: *service_default
+    image: mariadb
+    container_name: digikam-db
+    ports:
+      - ${DIGIKAM_PORT}:3306
+    command: --max_allowed_packet=128M --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
+    volumes:
+      - /srv/config/digikam/db:/var/lib/mysql
+    environment:
+      # app
+      MARIADB_DATABASE: ${DIGIKAM_DB_NAME}
+      MARIADB_USER: ${DIGIKAM_DB_USER}
+      MARIADB_PASSWORD_FILE: /run/secrets/digikam_db_password
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/digikam_db_root_password
+    secrets:
+      - digikam_db_password
+      - digikam_db_root_password
+
+  plex:
+    <<: *service_default
+    image: plexinc/pms-docker:${PLEX_VERSION}
+    container_name: plex-media-server
+    hostname: plex-media-server
+    ports:
+      - ${PLEX_LOCAL_PORT}:32400/tcp
+      - 8324:8324/tcp
+      - 32469:32469/tcp
+      - 1900:1900/udp
+      - 32410:32410/udp
+      - 32412:32412/udp
+      - 32413:32413/udp
+      - 32414:32414/udp
+    volumes:
+      - /srv/config/plex/config:/config
+      - /srv/config/plex/transcode:/transcode
+      - /srv/zmedia/videos:/data/videos
+      - /srv/zmedia/music:/data/music
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${PLEX_HOST}
+      VIRTUAL_PORT: 32400
+      LETSENCRYPT_HOST: ${PLEX_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      PLEX_CLAIM:
+      PLEX_UID: ${UID}
+      PLEX_GID: ${GID}
+      TZ: ${TIME_ZONE}
+    networks:
+      - proxy-tier
+      - hass
+
+  jellyfin:
+    <<: *service_default
+    image: jellyfin/jellyfin:${JELLYFIN_VERSION}
+    container_name: jellyfin
+    hostname: jellyfin
+    user: ${UID}:${GID}
+    ports:
+      - ${JELLYFIN_LOCAL_PORT}:8096/tcp
+    volumes:
+      - /srv/config/jellyfin/config:/config
+      - /srv/config/jellyfin/cache:/cache
+      - /srv/zmedia/videos:/media/videos:ro
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${JELLYFIN_HOST}
+      VIRTUAL_PORT: 8096
+      LETSENCRYPT_HOST: ${JELLYFIN_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+    networks:
+      - proxy-tier
+      - hass
+
+  asf:
+    <<: *service_default
+    image: justarchi/archisteamfarm:${ASF_VERSION}
+    container_name: asf
+    volumes:
+      - /srv/config/archi-steam-farm:/app/config
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${ASF_HOST}
+      VIRTUAL_PORT: 1242
+      LETSENCRYPT_HOST: ${ASF_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+    networks:
+      - proxy-tier
+
+  anki:
+    <<: *service_default
+    image: kuklinistvan/anki-sync-server:${ANKI_VERSION}
+    container_name: anki
+    volumes:
+      - /srv/config/anki:/app/data
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${ANKI_HOST}
+      VIRTUAL_PORT: 27701
+      LETSENCRYPT_HOST: ${ANKI_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
     networks:
       - proxy-tier

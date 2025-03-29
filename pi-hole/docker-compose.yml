@@ -1,11 +1,9 @@
 version: '3'
-
 secrets:
   pihole_password:
     file: secrets/pihole_password
 
 services:
-
   pi-hole:
     image: pihole/pihole:${PIHOLE_VERSION}
     container_name: pi-hole

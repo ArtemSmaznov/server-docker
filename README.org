@@ -2,37 +2,45 @@
 :ID:       99b3d8ba-b9a3-45c1-bdde-88daa0451bc2
 :ROAM_ALIASES: README
 :END:
-#+title:       Server
+#+title:       HomeLab
 #+author:      Artem Smaznov
-#+description: Docker setup for my server
+#+description: Setup for my HomeLab Server
 #+startup:     overview
 #+property:    header-args :tangle docker-compose.yml
 #+auto_tangle: t
 
 * Table of Contents :toc:
 - [[#usage][Usage]]
-- [[#networks][Networks]]
-- [[#secrets][Secrets]]
-- [[#templates][Templates]]
-- [[#services][Services]]
-  - [[#reverse-proxy][Reverse Proxy]]
-  - [[#dd-client][DD Client]]
-  - [[#home][Home]]
+- [[#docker-compose][Docker-compose]]
+- [[#dashboards][Dashboards]]
+  - [[#home-page][Home page]]
+  - [[#grafana][Grafana]]
+- [[#networking][Networking]]
+  - [[#pi-hole][Pi-hole]]
+  - [[#reverse-proxy][Reverse proxy]]
+  - [[#certificates][Certificates]]
+  - [[#dynamic-dns][Dynamic DNS]]
   - [[#hold-vpn][HOLD VPN]]
   - [[#kill-transmission][KILL Transmission]]
   - [[#transmission][Transmission]]
-  - [[#nextcloud][Nextcloud]]
+- [[#automation][Automation]]
   - [[#home-assistant][Home Assistant]]
-  - [[#grafana][Grafana]]
+- [[#documents][Documents]]
+  - [[#nextcloud][Nextcloud]]
+  - [[#books][Books]]
+  - [[#web-trees][Web Trees]]
+- [[#music][Music]]
+  - [[#navidrome][Navidrome]]
+- [[#photos][Photos]]
   - [[#immich][Immich]]
+  - [[#digikam-db][DigiKam DB]]
+- [[#video][Video]]
   - [[#plex][Plex]]
   - [[#jellyfin][Jellyfin]]
-  - [[#calibre][Calibre]]
-  - [[#web-trees][Web Trees]]
-  - [[#anki][Anki]]
+- [[#games][Games]]
   - [[#archi-steam-farm][Archi Steam Farm]]
-  - [[#digikam-db][DigiKam DB]]
-  - [[#music][Music]]
+- [[#misc][Misc]]
+  - [[#anki][Anki]]
 
 * Usage
 Bring server up
@@ -50,7 +58,7 @@ Update images
 docker-compose build --pull
 #+end_example
 
-* Networks
+* Docker-compose :amadeus:
 #+begin_src yaml
 networks:
   proxy-tier:
@@ -68,8 +76,6 @@ networks:
   grafana:
   webtrees:
 #+end_src
-
-* Secrets
 #+begin_src yaml
 secrets:
   db_password:
@@ -95,80 +101,16 @@ secrets:
   digikam_db_root_password:
     file: secrets/digikam/db_root_password
 #+end_src
-
-* Templates
-Default
 #+begin_src yaml
 x-default: &service_default
   tty: true # enable colorized logs
   restart: unless-stopped
 #+end_src
-
-* Services
 #+begin_src yaml
 services:
 #+end_src
-** Reverse Proxy
-*** Proxy
-#+begin_src yaml
-  proxy:
-    build: ./proxy
-    container_name: reverse-proxy
-    tty: true # enable colorized logs
-    restart: always
-    ports:
-      - 80:80
-      - 443:443
-    volumes:
-      - /srv/config/proxy/certs:/etc/nginx/certs:ro
-      - /srv/config/proxy/vhost.d:/etc/nginx/vhost.d
-      - /srv/config/proxy/html:/usr/share/nginx/html
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-    labels:
-      com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: 'true'
-    networks:
-      - proxy-tier
-#+end_src
-
-*** Let's Encrypt Companion
-#+begin_src yaml
-  acme:
-    <<: *service_default
-    image: nginxproxy/acme-companion:${ACME_VERSION}
-    container_name: acme
-    restart: always
-    depends_on:
-      - proxy
-    volumes:
-      - /srv/config/proxy/certs:/etc/nginx/certs
-      - /srv/config/proxy/acme:/etc/acme.sh
-      - /srv/config/proxy/vhost.d:/etc/nginx/vhost.d
-      - /srv/config/proxy/html:/usr/share/nginx/html
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      # app
-      DEFAULT_EMAIL: ${MY_EMAIL}
-    networks:
-      - proxy-tier
-#+end_src
-
-** DD Client
-#+begin_src yaml
-  ddclient:
-    <<: *service_default
-    image: lscr.io/linuxserver/ddclient:${DD_VERSION}
-    container_name: ddclient
-    hostname: ddclient
-    volumes:
-      - /srv/config/dns:/config
-    environment:
-      # app
-      PUID: ${UID}
-      PGID: ${GID}
-      TZ: ${TIME_ZONE}
-#+end_src
-
-** Home
+* Dashboards :amadeus:dashboard:
+** Home page
 #+begin_src yaml
   home:
     <<: *service_default
@@ -192,7 +134,142 @@ services:
       - proxy-tier
 #+end_src
 
-** HOLD VPN
+** Grafana
+#+begin_src yaml
+  grafana:
+    <<: *service_default
+    image: grafana/grafana-oss:${GRAFANA_VERSION:-preview}
+    container_name: grafana
+    user: '${UID}'
+    ports:
+      - ${GRAFANA_LOCAL_PORT}:3000
+    volumes:
+      - /srv/config/grafana/app:/var/lib/grafana
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${GRAFANA_HOST}
+      VIRTUAL_PORT: 3000
+      LETSENCRYPT_HOST: ${GRAFANA_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      GF_SERVER_ROOT_URL: https://${GRAFANA_HOST}
+      GF_SERVER_DOMAIN: ${MY_DOMAIN}
+
+      GF_DATE_FORMATS_FULL_DATE: ddd, D MMM YYYY - h:mm:ssa
+      GF_DATE_FORMATS_INTERVAL_SECOND: h:mm:ssa
+      GF_DATE_FORMATS_INTERVAL_MINUTE: h:mm
+      GF_DATE_FORMATS_INTERVAL_HOUR: D MMM HH:mm
+      GF_DATE_FORMATS_INTERVAL_DAY: D MMM
+      GF_DATE_FORMATS_INTERVAL_MONTH: MMM YYYY
+      GF_DATE_FORMATS_INTERVAL_YEAR: YYYY
+    networks:
+      - proxy-tier
+      - grafana
+      - hass
+#+end_src
+
+* Networking :net:
+** Pi-hole :ichigo:dns:
+:PROPERTIES:
+:header-args: :tangle pi-hole/docker-compose.yml
+:END:
+#+begin_src yaml
+version: '3'
+secrets:
+  pihole_password:
+    file: secrets/pihole_password
+
+services:
+  pi-hole:
+    image: pihole/pihole:${PIHOLE_VERSION}
+    container_name: pi-hole
+    hostname: pi-hole
+    tty: true # enable colorized logs
+    restart: always
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - /home/pi-hole/etc:/etc/pihole
+      - /home/pi-hole/dnsmasq.d:/etc/dnsmasq.d
+    environment:
+      - VIRTUAL_HOST=${PIHOLE_HOST}
+      - VIRTUAL_PORT=80
+      - LETSENCRYPT_HOST=${PIHOLE_HOST}
+      - LETSENCRYPT_EMAIL=${MY_EMAIL}
+      - FTLCONF_LOCAL_IPV4=${MY_SERVER_IP}
+      - WEBPASSWORD_FILE=/run/secrets/pihole_password
+      - PROXY_LOCATION=pi-hole
+      - TZ=${TIME_ZONE}
+    extra_hosts:
+      # Resolve to nothing domains (terminate connection)
+      - 'nw2master.bioware.com nwn2.master.gamespy.com:0.0.0.0'
+    secrets:
+      - pihole_password
+#+end_src
+
+** Reverse proxy :amadeus:proxy:
+#+begin_src yaml
+  proxy:
+    build: ./proxy
+    container_name: reverse-proxy
+    tty: true # enable colorized logs
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /srv/config/proxy/certs:/etc/nginx/certs:ro
+      - /srv/config/proxy/vhost.d:/etc/nginx/vhost.d
+      - /srv/config/proxy/html:/usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    labels:
+      com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: 'true'
+    networks:
+      - proxy-tier
+#+end_src
+
+** Certificates :amadeus:cert:
+Let's encrypt companion
+#+begin_src yaml
+  acme:
+    <<: *service_default
+    image: nginxproxy/acme-companion:${ACME_VERSION}
+    container_name: acme
+    restart: always
+    depends_on:
+      - proxy
+    volumes:
+      - /srv/config/proxy/certs:/etc/nginx/certs
+      - /srv/config/proxy/acme:/etc/acme.sh
+      - /srv/config/proxy/vhost.d:/etc/nginx/vhost.d
+      - /srv/config/proxy/html:/usr/share/nginx/html
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      # app
+      DEFAULT_EMAIL: ${MY_EMAIL}
+    networks:
+      - proxy-tier
+#+end_src
+
+** Dynamic DNS :amadeus:dns:
+#+begin_src yaml
+  ddclient:
+    <<: *service_default
+    image: lscr.io/linuxserver/ddclient:${DD_VERSION}
+    container_name: ddclient
+    hostname: ddclient
+    volumes:
+      - /srv/config/dns:/config
+    environment:
+      # app
+      PUID: ${UID}
+      PGID: ${GID}
+      TZ: ${TIME_ZONE}
+#+end_src
+
+** HOLD VPN :amadeus:vpn:
 *** WireGuard
 #+begin_src yaml :tangle no
   wireguard:
@@ -267,10 +344,12 @@ services:
         max-size: 50m
     network_mode: service:wireguard
 #+end_src
-
-** KILL Transmission
+** KILL Transmission :amadeus:
+:PROPERTIES:
+:header-args: :tangle no
+:END:
 Still needs work on opening the peer port
-#+begin_src yaml :tangle no
+#+begin_src yaml
   transmission:
     <<: *service_default
     image: linuxserver/transmission:latest
@@ -310,7 +389,7 @@ Still needs work on opening the peer port
     #network_mode: service:wireguard
 #+end_src
 
-** Transmission
+** Transmission :amadeus:vpn:
 https://haugene.github.io/docker-transmission-openvpn/
 #+begin_src yaml
   transmission:
@@ -355,7 +434,137 @@ https://haugene.github.io/docker-transmission-openvpn/
       - hass
 #+end_src
 
-** Nextcloud
+* Automation :amadeus:
+** Home Assistant :ha:home:
+*** App
+#+begin_src yaml
+  hass:
+    <<: *service_default
+    image: ghcr.io/home-assistant/home-assistant:${HOME_ASSISTANT_VERSION}
+    container_name: home-assistant
+    privileged: true
+    ports:
+      - ${HOME_ASSISTANT_LOCAL_PORT}:8123
+    volumes:
+      - /srv/config/home-assistant/config:/config
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${HOME_ASSISTANT_HOST}
+      VIRTUAL_PORT: 8123
+      LETSENCRYPT_HOST: ${HOME_ASSISTANT_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+    networks:
+      - proxy-tier
+      - hass
+#+end_src
+
+*** Z-Wave JS UI :plug:
+#+begin_src yaml
+  zwave-js-ui:
+    <<: *service_default
+    image: zwavejs/zwave-js-ui:${ZWAVE_JS_VERSION}
+    container_name: zwave-js-ui
+    stop_signal: SIGINT
+    depends_on:
+      - hass
+    ports:
+      - ${ZWAVE_JS_LOCAL_PORT}:3000 # port for Z-Wave JS websocket server
+    volumes:
+      - /srv/config/home-assistant/zwave:/usr/src/app/store
+    devices:
+      - /dev/serial/by-id/usb-0658_0200-if00:/dev/zwave
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${ZWAVE_JS_HOST}
+      VIRTUAL_PORT: 8091
+      LETSENCRYPT_HOST: ${ZWAVE_JS_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      ZWAVEJS_EXTERNAL_CONFIG: /usr/src/app/store/.config-db
+      TZ: ${TIME_ZONE}
+    env_file:
+      - secrets/zwave-js-ui.env
+    networks:
+      - hass
+      - proxy-tier
+#+end_src
+
+*** Wyoming :plug:ai:
+**** Whisper :stt:
+speech-to-text
+
+#+begin_src yaml
+  whisper:
+    <<: *service_default
+    image: rhasspy/wyoming-whisper:${WYOMING_WHISPER_VERSION}
+    container_name: whisper
+    depends_on:
+      - hass
+    ports:
+      - 10300:10300
+    volumes:
+      - /srv/config/home-assistant/wyoming-whisper:/data
+    command: --model=distil-small.en --language=en
+    networks:
+      - hass
+#+end_src
+
+**** Piper :tts:
+text-to-speech
+
+#+begin_src yaml
+  piper:
+    <<: *service_default
+    image: rhasspy/wyoming-piper:${WYOMING_PIPER_VERSION}
+    container_name: piper
+    depends_on:
+      - hass
+    ports:
+      - 10200:10200
+    volumes:
+      - /srv/config/home-assistant/wyoming-piper:/data
+    command: --voice=en_US-libritts_r-medium
+    networks:
+      - hass
+#+end_src
+
+**** Open wake word
+wake word detection
+
+#+begin_src yaml
+  openwakeword:
+    <<: *service_default
+    image: rhasspy/wyoming-openwakeword:${WYOMING_OPENWAKEWORD_VERSION}
+    container_name: openwakeword
+    depends_on:
+      - hass
+    ports:
+      - 10400:10400
+    command: --preload-model=ok_nabu
+    networks:
+      - hass
+#+end_src
+
+*** Influx DB :db:
+#+begin_src yaml
+  grafana-influxdb:
+    <<: *service_default
+    image: influxdb:${INFLUXDB_VERSION}
+    container_name: grafana-influxdb
+    depends_on:
+      - hass
+    ports:
+      - ${INFLUXDB_LOCAL_PORT}:8086
+    volumes:
+      - /srv/config/grafana/influxdb:/var/lib/influxdb2
+    networks:
+      - grafana
+      - hass
+#+end_src
+* Documents :amadeus:doc:
+** Nextcloud :nc:
 *** App
 #+begin_src yaml
   nextcloud-app:
@@ -434,7 +643,7 @@ https://haugene.github.io/docker-transmission-openvpn/
       - nextcloud
 #+end_src
 
-*** Database
+*** Database :db:
 #+begin_src yaml
   nextcloud-db:
     <<: *service_default
@@ -468,318 +677,7 @@ https://haugene.github.io/docker-transmission-openvpn/
       - nextcloud
 #+end_src
 
-** Home Assistant
-*** App
-#+begin_src yaml
-  hass:
-    <<: *service_default
-    image: ghcr.io/home-assistant/home-assistant:${HOME_ASSISTANT_VERSION}
-    container_name: home-assistant
-    privileged: true
-    ports:
-      - ${HOME_ASSISTANT_LOCAL_PORT}:8123
-    volumes:
-      - /srv/config/home-assistant/config:/config
-      - /etc/localtime:/etc/localtime:ro
-    environment:
-      # proxy
-      VIRTUAL_HOST: ${HOME_ASSISTANT_HOST}
-      VIRTUAL_PORT: 8123
-      LETSENCRYPT_HOST: ${HOME_ASSISTANT_HOST}
-      LETSENCRYPT_EMAIL: ${MY_EMAIL}
-    networks:
-      - proxy-tier
-      - hass
-#+end_src
-
-*** Z-Wave JS UI
-#+begin_src yaml
-  zwave-js-ui:
-    <<: *service_default
-    image: zwavejs/zwave-js-ui:${ZWAVE_JS_VERSION}
-    container_name: zwave-js-ui
-    stop_signal: SIGINT
-    depends_on:
-      - hass
-    ports:
-      - ${ZWAVE_JS_LOCAL_PORT}:3000 # port for Z-Wave JS websocket server
-    volumes:
-      - /srv/config/home-assistant/zwave:/usr/src/app/store
-    devices:
-      - /dev/serial/by-id/usb-0658_0200-if00:/dev/zwave
-    environment:
-      # proxy
-      VIRTUAL_HOST: ${ZWAVE_JS_HOST}
-      VIRTUAL_PORT: 8091
-      LETSENCRYPT_HOST: ${ZWAVE_JS_HOST}
-      LETSENCRYPT_EMAIL: ${MY_EMAIL}
-
-      # app
-      ZWAVEJS_EXTERNAL_CONFIG: /usr/src/app/store/.config-db
-      TZ: ${TIME_ZONE}
-    env_file:
-      - secrets/zwave-js-ui.env
-    networks:
-      - hass
-      - proxy-tier
-#+end_src
-
-*** Wyoming Whisper
-speech-to-text
-
-#+begin_src yaml
-  whisper:
-    <<: *service_default
-    image: rhasspy/wyoming-whisper:${WYOMING_WHISPER_VERSION}
-    container_name: whisper
-    depends_on:
-      - hass
-    ports:
-      - 10300:10300
-    volumes:
-      - /srv/config/home-assistant/wyoming-whisper:/data
-    command: --model=distil-small.en --language=en
-    networks:
-      - hass
-#+end_src
-
-*** Wyoming Piper
-text-to-speech
-
-#+begin_src yaml
-  piper:
-    <<: *service_default
-    image: rhasspy/wyoming-piper:${WYOMING_PIPER_VERSION}
-    container_name: piper
-    depends_on:
-      - hass
-    ports:
-      - 10200:10200
-    volumes:
-      - /srv/config/home-assistant/wyoming-piper:/data
-    command: --voice=en_US-libritts_r-medium
-    networks:
-      - hass
-#+end_src
-
-*** Wyoming Open Wake Word
-wake word detection
-
-#+begin_src yaml
-  openwakeword:
-    <<: *service_default
-    image: rhasspy/wyoming-openwakeword:${WYOMING_OPENWAKEWORD_VERSION}
-    container_name: openwakeword
-    depends_on:
-      - hass
-    ports:
-      - 10400:10400
-    command: --preload-model=ok_nabu
-    networks:
-      - hass
-#+end_src
-
-*** Influx DB
-#+begin_src yaml
-  grafana-influxdb:
-    <<: *service_default
-    image: influxdb:${INFLUXDB_VERSION}
-    container_name: grafana-influxdb
-    depends_on:
-      - hass
-    ports:
-      - ${INFLUXDB_LOCAL_PORT}:8086
-    volumes:
-      - /srv/config/grafana/influxdb:/var/lib/influxdb2
-    networks:
-      - grafana
-      - hass
-#+end_src
-
-** Grafana
-#+begin_src yaml
-  grafana:
-    <<: *service_default
-    image: grafana/grafana-oss:${GRAFANA_VERSION:-preview}
-    container_name: grafana
-    user: '${UID}'
-    ports:
-      - ${GRAFANA_LOCAL_PORT}:3000
-    volumes:
-      - /srv/config/grafana/app:/var/lib/grafana
-    environment:
-      # proxy
-      VIRTUAL_HOST: ${GRAFANA_HOST}
-      VIRTUAL_PORT: 3000
-      LETSENCRYPT_HOST: ${GRAFANA_HOST}
-      LETSENCRYPT_EMAIL: ${MY_EMAIL}
-
-      # app
-      GF_SERVER_ROOT_URL: https://${GRAFANA_HOST}
-      GF_SERVER_DOMAIN: ${MY_DOMAIN}
-
-      GF_DATE_FORMATS_FULL_DATE: ddd, D MMM YYYY - h:mm:ssa
-      GF_DATE_FORMATS_INTERVAL_SECOND: h:mm:ssa
-      GF_DATE_FORMATS_INTERVAL_MINUTE: h:mm
-      GF_DATE_FORMATS_INTERVAL_HOUR: D MMM HH:mm
-      GF_DATE_FORMATS_INTERVAL_DAY: D MMM
-      GF_DATE_FORMATS_INTERVAL_MONTH: MMM YYYY
-      GF_DATE_FORMATS_INTERVAL_YEAR: YYYY
-    networks:
-      - proxy-tier
-      - grafana
-      - hass
-#+end_src
-
-** Immich
-*** App
-#+begin_src yaml
-  immich:
-    <<: *service_default
-    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
-    container_name: immich
-    hostname: immich
-    depends_on:
-      - immich-db
-      - immich-redis
-    ports:
-      - ${IMMICH_LOCAL_PORT}:2283
-    volumes:
-      - /srv/zmedia/immich:/usr/src/app/upload
-      - /etc/localtime:/etc/localtime:ro
-    environment:
-      # proxy
-      VIRTUAL_HOST: ${IMMICH_HOST}
-      VIRTUAL_PORT: 2283
-      LETSENCRYPT_HOST: ${IMMICH_HOST}
-      LETSENCRYPT_EMAIL: ${MY_EMAIL}
-
-      # app
-      DB_DATABASE_NAME: ${IMMICH_DB_NAME}
-      DB_USERNAME: ${IMMICH_DB_USER}
-      DB_PASSWORD: /run/secrets/immich_db_password
-      DB_HOSTNAME: immich-db
-      REDIS_HOSTNAME: immich-redis
-      TZ: ${TIME_ZONE}
-    secrets:
-      - immich_db_password
-    networks:
-      - proxy-tier
-      - immich
-#+end_src
-
-*** Machine Learning
-#+begin_src yaml
-  immich-machine-learning:
-    <<: *service_default
-    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
-    container_name: immich-machine-learning
-    # For hardware acceleration, add one of -[armnn, cuda, openvino] to the image tag.
-    # Example tag: ${IMMICH_VERSION:-release}-cuda
-    # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/ml-hardware-acceleration
-    #   file: hwaccel.ml.yml
-    #   service: cpu # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference - use the `-wsl` version for WSL2 where applicable
-    volumes:
-      - /srv/config/immich/cache:/cache
-    networks:
-      - immich
-#+end_src
-
-*** Database
-#+begin_src yaml
-  immich-db:
-    <<: *service_default
-    image: tensorchord/pgvecto-rs:pg14-v0.2.0
-    container_name: immich-db
-    hostname: immich-db
-    command: ["postgres", "-c" ,"shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
-    volumes:
-      - /srv/config/immich/db:/var/lib/postgresql/data
-    environment:
-      # app
-      POSTGRES_DB: ${IMMICH_DB_NAME}
-      POSTGRES_USER: ${IMMICH_DB_USER}
-      POSTGRES_PASSWORD: /run/secrets/immich_db_password
-      POSTGRES_INITDB_ARGS: '--data-checksums'
-    secrets:
-      - immich_db_password
-    networks:
-      - immich
-#+end_src
-
-*** Redis
-#+begin_src yaml
-  immich-redis:
-    <<: *service_default
-    image: redis:alpine
-    container_name: immich-redis
-    networks:
-      - immich
-#+end_src
-
-** Plex
-#+begin_src yaml
-  plex:
-    <<: *service_default
-    image: plexinc/pms-docker:${PLEX_VERSION}
-    container_name: plex-media-server
-    hostname: plex-media-server
-    ports:
-      - ${PLEX_LOCAL_PORT}:32400/tcp
-      - 8324:8324/tcp
-      - 32469:32469/tcp
-      - 1900:1900/udp
-      - 32410:32410/udp
-      - 32412:32412/udp
-      - 32413:32413/udp
-      - 32414:32414/udp
-    volumes:
-      - /srv/config/plex/config:/config
-      - /srv/config/plex/transcode:/transcode
-      - /srv/zmedia/videos:/data/videos
-      - /srv/zmedia/music:/data/music
-    environment:
-      # proxy
-      VIRTUAL_HOST: ${PLEX_HOST}
-      VIRTUAL_PORT: 32400
-      LETSENCRYPT_HOST: ${PLEX_HOST}
-      LETSENCRYPT_EMAIL: ${MY_EMAIL}
-
-      # app
-      PLEX_CLAIM:
-      PLEX_UID: ${UID}
-      PLEX_GID: ${GID}
-      TZ: ${TIME_ZONE}
-    networks:
-      - proxy-tier
-      - hass
-#+end_src
-
-** Jellyfin
-#+begin_src yaml
-  jellyfin:
-    <<: *service_default
-    image: jellyfin/jellyfin:${JELLYFIN_VERSION}
-    container_name: jellyfin
-    hostname: jellyfin
-    user: ${UID}:${GID}
-    ports:
-      - ${JELLYFIN_LOCAL_PORT}:8096/tcp
-    volumes:
-      - /srv/config/jellyfin/config:/config
-      - /srv/config/jellyfin/cache:/cache
-      - /srv/zmedia/videos:/media/videos:ro
-    environment:
-      # proxy
-      VIRTUAL_HOST: ${JELLYFIN_HOST}
-      VIRTUAL_PORT: 8096
-      LETSENCRYPT_HOST: ${JELLYFIN_HOST}
-      LETSENCRYPT_EMAIL: ${MY_EMAIL}
-    networks:
-      - proxy-tier
-      - hass
-#+end_src
-** Calibre
+** Books :book:
 *** Calibre Web - Books
 #+begin_src yaml
   calibre-web-books:
@@ -861,7 +759,7 @@ wake word detection
       - proxy-tier
 #+end_src
 
-** Web Trees
+** Web Trees :family:
 *** App
 #+begin_src yaml
   webtrees:
@@ -907,7 +805,7 @@ wake word detection
       - webtrees
 #+end_src
 
-*** Database
+*** Database :db:
 #+begin_src yaml
   webtrees-db:
     <<: *service_default
@@ -931,66 +829,8 @@ wake word detection
       - webtrees
 #+end_src
 
-** Anki
-#+begin_src yaml
-  anki:
-    <<: *service_default
-    image: kuklinistvan/anki-sync-server:${ANKI_VERSION}
-    container_name: anki
-    volumes:
-      - /srv/config/anki:/app/data
-    environment:
-      # proxy
-      VIRTUAL_HOST: ${ANKI_HOST}
-      VIRTUAL_PORT: 27701
-      LETSENCRYPT_HOST: ${ANKI_HOST}
-      LETSENCRYPT_EMAIL: ${MY_EMAIL}
-    networks:
-      - proxy-tier
-#+end_src
-
-** Archi Steam Farm
-#+begin_src yaml
-  asf:
-    <<: *service_default
-    image: justarchi/archisteamfarm:${ASF_VERSION}
-    container_name: asf
-    volumes:
-      - /srv/config/archi-steam-farm:/app/config
-    environment:
-      # proxy
-      VIRTUAL_HOST: ${ASF_HOST}
-      VIRTUAL_PORT: 1242
-      LETSENCRYPT_HOST: ${ASF_HOST}
-      LETSENCRYPT_EMAIL: ${MY_EMAIL}
-    networks:
-      - proxy-tier
-#+end_src
-
-** DigiKam DB
-#+begin_src yaml
-  digikam-db:
-    <<: *service_default
-    image: mariadb
-    container_name: digikam-db
-    ports:
-      - ${DIGIKAM_PORT}:3306
-    command: --max_allowed_packet=128M --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
-    volumes:
-      - /srv/config/digikam/db:/var/lib/mysql
-    environment:
-      # app
-      MARIADB_DATABASE: ${DIGIKAM_DB_NAME}
-      MARIADB_USER: ${DIGIKAM_DB_USER}
-      MARIADB_PASSWORD_FILE: /run/secrets/digikam_db_password
-      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/digikam_db_root_password
-    secrets:
-      - digikam_db_password
-      - digikam_db_root_password
-#+end_src
-
-** Music
-*** Navidrome
+* Music :amadeus:music:
+** Navidrome
 #+begin_src yaml
   navidrome:
     <<: *service_default
@@ -1013,6 +853,216 @@ wake word detection
 
       # app
       ND_CONFIGFILE: /data/navidrome.toml
+    networks:
+      - proxy-tier
+#+end_src
+* Photos :amadeus:photo:
+** Immich
+*** App
+#+begin_src yaml
+  immich:
+    <<: *service_default
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    container_name: immich
+    hostname: immich
+    depends_on:
+      - immich-db
+      - immich-redis
+    ports:
+      - ${IMMICH_LOCAL_PORT}:2283
+    volumes:
+      - /srv/zmedia/immich:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${IMMICH_HOST}
+      VIRTUAL_PORT: 2283
+      LETSENCRYPT_HOST: ${IMMICH_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      DB_DATABASE_NAME: ${IMMICH_DB_NAME}
+      DB_USERNAME: ${IMMICH_DB_USER}
+      DB_PASSWORD: /run/secrets/immich_db_password
+      DB_HOSTNAME: immich-db
+      REDIS_HOSTNAME: immich-redis
+      TZ: ${TIME_ZONE}
+    secrets:
+      - immich_db_password
+    networks:
+      - proxy-tier
+      - immich
+#+end_src
+
+*** Machine Learning :ai:
+#+begin_src yaml
+  immich-machine-learning:
+    <<: *service_default
+    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
+    container_name: immich-machine-learning
+    # For hardware acceleration, add one of -[armnn, cuda, openvino] to the image tag.
+    # Example tag: ${IMMICH_VERSION:-release}-cuda
+    # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/ml-hardware-acceleration
+    #   file: hwaccel.ml.yml
+    #   service: cpu # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference - use the `-wsl` version for WSL2 where applicable
+    volumes:
+      - /srv/config/immich/cache:/cache
+    networks:
+      - immich
+#+end_src
+
+*** Database :db:
+#+begin_src yaml
+  immich-db:
+    <<: *service_default
+    image: tensorchord/pgvecto-rs:pg14-v0.2.0
+    container_name: immich-db
+    hostname: immich-db
+    command: ["postgres", "-c" ,"shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
+    volumes:
+      - /srv/config/immich/db:/var/lib/postgresql/data
+    environment:
+      # app
+      POSTGRES_DB: ${IMMICH_DB_NAME}
+      POSTGRES_USER: ${IMMICH_DB_USER}
+      POSTGRES_PASSWORD: /run/secrets/immich_db_password
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+    secrets:
+      - immich_db_password
+    networks:
+      - immich
+#+end_src
+
+*** Redis
+#+begin_src yaml
+  immich-redis:
+    <<: *service_default
+    image: redis:alpine
+    container_name: immich-redis
+    networks:
+      - immich
+#+end_src
+
+** DigiKam DB :db:
+#+begin_src yaml
+  digikam-db:
+    <<: *service_default
+    image: mariadb
+    container_name: digikam-db
+    ports:
+      - ${DIGIKAM_PORT}:3306
+    command: --max_allowed_packet=128M --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
+    volumes:
+      - /srv/config/digikam/db:/var/lib/mysql
+    environment:
+      # app
+      MARIADB_DATABASE: ${DIGIKAM_DB_NAME}
+      MARIADB_USER: ${DIGIKAM_DB_USER}
+      MARIADB_PASSWORD_FILE: /run/secrets/digikam_db_password
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/digikam_db_root_password
+    secrets:
+      - digikam_db_password
+      - digikam_db_root_password
+#+end_src
+
+* Video :amadeus:video:
+** Plex
+#+begin_src yaml
+  plex:
+    <<: *service_default
+    image: plexinc/pms-docker:${PLEX_VERSION}
+    container_name: plex-media-server
+    hostname: plex-media-server
+    ports:
+      - ${PLEX_LOCAL_PORT}:32400/tcp
+      - 8324:8324/tcp
+      - 32469:32469/tcp
+      - 1900:1900/udp
+      - 32410:32410/udp
+      - 32412:32412/udp
+      - 32413:32413/udp
+      - 32414:32414/udp
+    volumes:
+      - /srv/config/plex/config:/config
+      - /srv/config/plex/transcode:/transcode
+      - /srv/zmedia/videos:/data/videos
+      - /srv/zmedia/music:/data/music
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${PLEX_HOST}
+      VIRTUAL_PORT: 32400
+      LETSENCRYPT_HOST: ${PLEX_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+      PLEX_CLAIM:
+      PLEX_UID: ${UID}
+      PLEX_GID: ${GID}
+      TZ: ${TIME_ZONE}
+    networks:
+      - proxy-tier
+      - hass
+#+end_src
+
+** Jellyfin
+#+begin_src yaml
+  jellyfin:
+    <<: *service_default
+    image: jellyfin/jellyfin:${JELLYFIN_VERSION}
+    container_name: jellyfin
+    hostname: jellyfin
+    user: ${UID}:${GID}
+    ports:
+      - ${JELLYFIN_LOCAL_PORT}:8096/tcp
+    volumes:
+      - /srv/config/jellyfin/config:/config
+      - /srv/config/jellyfin/cache:/cache
+      - /srv/zmedia/videos:/media/videos:ro
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${JELLYFIN_HOST}
+      VIRTUAL_PORT: 8096
+      LETSENCRYPT_HOST: ${JELLYFIN_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+    networks:
+      - proxy-tier
+      - hass
+#+end_src
+
+* Games :amadeus:game:
+** Archi Steam Farm
+#+begin_src yaml
+  asf:
+    <<: *service_default
+    image: justarchi/archisteamfarm:${ASF_VERSION}
+    container_name: asf
+    volumes:
+      - /srv/config/archi-steam-farm:/app/config
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${ASF_HOST}
+      VIRTUAL_PORT: 1242
+      LETSENCRYPT_HOST: ${ASF_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
+    networks:
+      - proxy-tier
+#+end_src
+
+* Misc :amadeus:
+** Anki :study:
+#+begin_src yaml
+  anki:
+    <<: *service_default
+    image: kuklinistvan/anki-sync-server:${ANKI_VERSION}
+    container_name: anki
+    volumes:
+      - /srv/config/anki:/app/data
+    environment:
+      # proxy
+      VIRTUAL_HOST: ${ANKI_HOST}
+      VIRTUAL_PORT: 27701
+      LETSENCRYPT_HOST: ${ANKI_HOST}
+      LETSENCRYPT_EMAIL: ${MY_EMAIL}
     networks:
       - proxy-tier
 #+end_src
