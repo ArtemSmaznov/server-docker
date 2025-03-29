@@ -364,7 +364,7 @@ Still needs work on opening the peer port
       - /srv/config/transmission/config:/config
       - /srv/config/transmission/watch:/watch
       - /srv/config/transmission/downloads:/downloads
-      - /srv/zmedia/videos:/downloads/videos
+      - ${VIDEOS_DIR}:/downloads/videos
     environment:
       # proxy
       VIRTUAL_HOST: ${TRANSMISSION_HOST}
@@ -404,9 +404,9 @@ https://haugene.github.io/docker-transmission-openvpn/
       - ${TRANSMISSION_WEBUI_PORT}:9091/tcp
     volumes:
       - /srv/config/transmission/config:/config/transmission-home
-      - /srv/zmedia/downloads/:/downloads
-      - /srv/zmedia/downloads/.watch:/watch
-      - /srv/zmedia/videos:/downloads/videos
+      - ${DOWNLOADS_DIR}:/downloads
+      - ${DOWNLOADS_DIR}/.watch:/watch
+      - ${VIDEOS_DIR}:/downloads/videos
     environment:
       # proxy
       VIRTUAL_HOST: ${TRANSMISSION_HOST}
@@ -842,7 +842,7 @@ wake word detection
       - ${NAVIDROME_LOCAL_PORT}:4533
     volumes:
       - /srv/config/navidrome:/data
-      - /srv/zmedia/music:/music:ro
+      - ${MUSIC_DIR}:/music:ro
       - /srv/zmedia/playlists:/playlists
     environment:
       # proxy
@@ -985,8 +985,8 @@ wake word detection
     volumes:
       - /srv/config/plex/config:/config
       - /srv/config/plex/transcode:/transcode
-      - /srv/zmedia/videos:/data/videos
-      - /srv/zmedia/music:/data/music
+      - ${VIDEOS_DIR}:/data/videos
+      - ${MUSIC_DIR}:/data/music
     environment:
       # proxy
       VIRTUAL_HOST: ${PLEX_HOST}
@@ -1017,7 +1017,7 @@ wake word detection
     volumes:
       - /srv/config/jellyfin/config:/config
       - /srv/config/jellyfin/cache:/cache
-      - /srv/zmedia/videos:/media/videos:ro
+      - ${VIDEOS_DIR}:/media/videos:ro
     environment:
       # proxy
       VIRTUAL_HOST: ${JELLYFIN_HOST}
