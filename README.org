@@ -30,7 +30,7 @@
   - [[#books][Books]]
   - [[#web-trees][Web Trees]]
 - [[#music][Music]]
-  - [[#mpd][MPD]]
+  - [[#hold-mpd][HOLD MPD]]
   - [[#navidrome][Navidrome]]
 - [[#photos][Photos]]
   - [[#immich][Immich]]
@@ -831,7 +831,10 @@ wake word detection
 #+end_src
 
 * Music :amadeus:music:
-** MPD
+** HOLD MPD
+:PROPERTIES:
+:header-args: :tangle no
+:END:
 #+begin_src yaml
   mpd:
     <<: *service_default

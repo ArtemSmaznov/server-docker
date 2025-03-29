@@ -523,29 +523,6 @@ services:
     networks:
       - webtrees
 
-  mpd:
-    <<: *service_default
-    image: vimagick/mpd
-    container_name: mpd
-    ports:
-      - 6600:6600
-      - 8800:8800
-    volumes:
-      - /srv/config/mpd:/root/.config
-      - ${MUSIC_DIR}:/var/lib/mpd/music
-      - ${PLAYLISTS_DIR}:/var/lib/mpd/playlists
-    devices:
-      - /dev/snd
-    environment:
-      # proxy
-      - VIRTUAL_HOST=${MPD_HOST}
-      - VIRTUAL_PORT=1242
-      - LETSENCRYPT_HOST=${MPD_HOST}
-      - LETSENCRYPT_EMAIL=${MY_EMAIL}
-    networks:
-      - proxy-tier
-      - hass
-
   navidrome:
     <<: *service_default
     image: deluan/navidrome:${NAVIDROME_VERSION}
