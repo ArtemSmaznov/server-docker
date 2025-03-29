@@ -30,6 +30,7 @@
   - [[#books][Books]]
   - [[#web-trees][Web Trees]]
 - [[#music][Music]]
+  - [[#mpd][MPD]]
   - [[#navidrome][Navidrome]]
 - [[#photos][Photos]]
   - [[#immich][Immich]]
@@ -830,6 +831,32 @@ wake word detection
 #+end_src
 
 * Music :amadeus:music:
+** MPD
+#+begin_src yaml
+  mpd:
+    <<: *service_default
+    image: vimagick/mpd
+    container_name: mpd
+    ports:
+      - 6600:6600
+      - 8800:8800
+    volumes:
+      - /srv/config/mpd:/root/.config
+      - ${MUSIC_DIR}:/var/lib/mpd/music
+      - ${PLAYLISTS_DIR}:/var/lib/mpd/playlists
+    devices:
+      - /dev/snd
+    environment:
+      # proxy
+      - VIRTUAL_HOST=${MPD_HOST}
+      - VIRTUAL_PORT=1242
+      - LETSENCRYPT_HOST=${MPD_HOST}
+      - LETSENCRYPT_EMAIL=${MY_EMAIL}
+    networks:
+      - proxy-tier
+      - hass
+#+end_src
+
 ** Navidrome
 #+begin_src yaml
   navidrome:
@@ -856,6 +883,7 @@ wake word detection
     networks:
       - proxy-tier
 #+end_src
+
 * Photos :amadeus:photo:
 ** Immich
 *** App
