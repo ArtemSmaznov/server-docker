@@ -1,4 +1,3 @@
-version: '3'
 secrets:
   pihole_password:
     file: secrets/pihole_password

@@ -176,7 +176,6 @@ services:
 :header-args: :tangle pi-hole/docker-compose.yml
 :END:
 #+begin_src yaml
-version: '3'
 secrets:
   pihole_password:
     file: secrets/pihole_password
