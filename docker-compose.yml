@@ -725,3 +725,16 @@ services:
       LETSENCRYPT_EMAIL: ${MY_EMAIL}
     networks:
       - proxy-tier
+
+  ollama:
+    <<: *service_default
+    image: ollama/ollama
+    container_name: ollama
+    hostname: ollama
+    ports:
+      - ${OLLAMA_LOCAL_PORT}:11434
+    volumes:
+      - ${CONFIG_DIR}/ollama:/root/.ollama
+      - ${MEDIA_DIR}/ai/models.ollama:/root/.ollama/models
+    networks:
+      - hass

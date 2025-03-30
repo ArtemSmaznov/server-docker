@@ -42,6 +42,8 @@
   - [[#archi-steam-farm][Archi Steam Farm]]
 - [[#misc][Misc]]
   - [[#anki][Anki]]
+- [[#ai][AI]]
+  - [[#ollama][Ollama]]
 
 * Usage
 Bring server up
@@ -1095,4 +1097,20 @@ wake word detection
       LETSENCRYPT_EMAIL: ${MY_EMAIL}
     networks:
       - proxy-tier
+#+end_src
+* AI :ai:
+** Ollama
+#+begin_src yaml
+  ollama:
+    <<: *service_default
+    image: ollama/ollama
+    container_name: ollama
+    hostname: ollama
+    ports:
+      - ${OLLAMA_LOCAL_PORT}:11434
+    volumes:
+      - ${CONFIG_DIR}/ollama:/root/.ollama
+      - ${MEDIA_DIR}/ai/models.ollama:/root/.ollama/models
+    networks:
+      - hass
 #+end_src
