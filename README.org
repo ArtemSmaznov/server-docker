@@ -15,6 +15,7 @@
 - [[#dashboards][Dashboards]]
   - [[#home-page][Home page]]
   - [[#grafana][Grafana]]
+  - [[#cosmos][Cosmos]]
 - [[#networking][Networking]]
   - [[#pi-hole][Pi-hole]]
   - [[#reverse-proxy][Reverse proxy]]
@@ -170,6 +171,32 @@ services:
       - proxy-tier
       - grafana
       - hass
+#+end_src
+** Cosmos
+#+begin_src yaml
+  cosmos:
+    <<: *service_default
+    image: azukaar/cosmos-server:${COSMOS_VERSION}
+    container_name: cosmos
+    user: '${UID}'
+    privileged: true
+    ports:
+      - ${COSMOS_LOCAL_PORT}:80
+      - 4242:4242/udp
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket:ro
+      - /srv/config/cosmos:/var/lib/cosmos
+    # environment:
+      # proxy
+      # VIRTUAL_HOST: ${COSMOS_HOST}
+      # VIRTUAL_PORT: 80
+      # LETSENCRYPT_HOST: ${COSMOS_HOST}
+      # LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+    networks:
+      - proxy-tier
 #+end_src
 
 * Networking :net:

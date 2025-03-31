@@ -97,6 +97,30 @@ services:
       - grafana
       - hass
 
+  cosmos:
+    <<: *service_default
+    image: azukaar/cosmos-server:${COSMOS_VERSION}
+    container_name: cosmos
+    user: '${UID}'
+    privileged: true
+    ports:
+      - ${COSMOS_LOCAL_PORT}:80
+      - 4242:4242/udp
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket:ro
+      - /srv/config/cosmos:/var/lib/cosmos
+    # environment:
+      # proxy
+      # VIRTUAL_HOST: ${COSMOS_HOST}
+      # VIRTUAL_PORT: 80
+      # LETSENCRYPT_HOST: ${COSMOS_HOST}
+      # LETSENCRYPT_EMAIL: ${MY_EMAIL}
+
+      # app
+    networks:
+      - proxy-tier
+
   proxy:
     build: ./proxy
     container_name: reverse-proxy
