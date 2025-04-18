@@ -32,6 +32,7 @@
 - [[#music][Music]]
   - [[#hold-mpd][HOLD MPD]]
   - [[#navidrome][Navidrome]]
+  - [[#snapcast][Snapcast]]
 - [[#photos][Photos]]
   - [[#immich][Immich]]
   - [[#digikam-db][DigiKam DB]]
@@ -886,6 +887,28 @@ wake word detection
       ND_CONFIGFILE: /data/navidrome.toml
     networks:
       - proxy-tier
+#+end_src
+
+** Snapcast
+#+begin_src yaml
+  snapcast:
+    <<: *service_default
+    image: docker.io/sweisgerber/snapcast:${SNAPCAST_VERSION}
+    container_name: snapcast
+    hostname: snapcast
+    ports:
+      - 1704:1704
+      - 1705:1705
+      - 1780:1780
+    volumes:
+      - ${CONFIG_DIR}/snapcast/config:/config
+      - ${CONFIG_DIR}/snapcast/data:/data
+      - ${CONFIG_DIR}/snapcast/fifos:/audio
+    environment:
+      # app
+      PUID: ${UID}
+      PGID: ${GID}
+      TZ: ${TIME_ZONE}
 #+end_src
 
 * Photos :amadeus:photo:

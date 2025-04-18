@@ -547,6 +547,25 @@ services:
     networks:
       - proxy-tier
 
+  snapcast:
+    <<: *service_default
+    image: docker.io/sweisgerber/snapcast:${SNAPCAST_VERSION}
+    container_name: snapcast
+    hostname: snapcast
+    ports:
+      - 1704:1704
+      - 1705:1705
+      - 1780:1780
+    volumes:
+      - ${CONFIG_DIR}/snapcast/config:/config
+      - ${CONFIG_DIR}/snapcast/data:/data
+      - ${CONFIG_DIR}/snapcast/fifos:/audio
+    environment:
+      # app
+      PUID: ${UID}
+      PGID: ${GID}
+      TZ: ${TIME_ZONE}
+
   immich:
     <<: *service_default
     image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
