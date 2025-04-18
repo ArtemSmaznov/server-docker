@@ -32,7 +32,7 @@
 - [[#music][Music]]
   - [[#hold-mpd][HOLD MPD]]
   - [[#navidrome][Navidrome]]
-  - [[#snapcast][Snapcast]]
+  - [[#hold-snapcast][HOLD Snapcast]]
 - [[#photos][Photos]]
   - [[#immich][Immich]]
   - [[#digikam-db][DigiKam DB]]
@@ -889,7 +889,10 @@ wake word detection
       - proxy-tier
 #+end_src
 
-** Snapcast
+** HOLD Snapcast
+:PROPERTIES:
+:header-args: :tangle no
+:END:
 #+begin_src yaml
   snapcast:
     <<: *service_default
