@@ -596,7 +596,7 @@ services:
 
   immich-db:
     <<: *service_default
-    image: tensorchord/pgvecto-rs:pg14-v0.2.0
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0
     container_name: immich-db
     hostname: immich-db
     command: ["postgres", "-c" ,"shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
@@ -608,6 +608,8 @@ services:
       POSTGRES_USER: ${IMMICH_DB_USER}
       POSTGRES_PASSWORD: /run/secrets/immich_db_password
       POSTGRES_INITDB_ARGS: '--data-checksums'
+      # Uncomment the DB_STORAGE_TYPE: 'HDD' var if your database isn't stored on SSDs
+      DB_STORAGE_TYPE: 'HDD'
     secrets:
       - immich_db_password
     networks:
