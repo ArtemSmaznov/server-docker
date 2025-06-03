@@ -217,6 +217,7 @@ services:
   proxy:
     build: ./proxy
     container_name: reverse-proxy
+    hostname: reverse-proxy
     tty: true # enable colorized logs
     restart: always
     ports:
@@ -240,6 +241,7 @@ Let's encrypt companion
     <<: *service_default
     image: nginxproxy/acme-companion:${ACME_VERSION}
     container_name: acme
+    hostname: acme
     restart: always
     depends_on:
       - proxy
